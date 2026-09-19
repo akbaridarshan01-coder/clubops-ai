@@ -54,9 +54,11 @@ export const api = {
   removeDependency: (id: string, dependsOnTaskId: string) => request(`/tasks/${id}/dependency/${dependsOnTaskId}`, { method: 'DELETE' }),
 
   // Volunteers
-  getVolunteers: (clubId: string, teamId?: string) => {
-    const q = teamId ? `?clubId=${clubId}&teamId=${teamId}` : `?clubId=${clubId}`;
-    return request(`/volunteers${q}`);
+  getVolunteers: (clubId: string, eventId?: string, teamId?: string) => {
+    const params = new URLSearchParams({ clubId });
+    if (eventId) params.set('eventId', eventId);
+    if (teamId) params.set('teamId', teamId);
+    return request(`/volunteers?${params}`);
   },
   createVolunteer: (data: any) => request('/volunteers', { method: 'POST', body: JSON.stringify(data) }),
   updateVolunteer: (id: string, data: any) => request(`/volunteers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

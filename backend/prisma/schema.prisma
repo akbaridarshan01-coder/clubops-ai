@@ -127,6 +127,7 @@ model Event {
   metrics              EventMetric[]
   aiActions            AiAction[]
   activityLogs         ActivityLog[]
+  volunteers           Volunteer[]
 
   @@index([clubId])
   @@index([status])
@@ -182,6 +183,7 @@ model TaskDependency {
 model Volunteer {
   id              String           @id @default(uuid())
   clubId          String
+  eventId         String?
   userId          String?
   teamId          String?
   name            String
@@ -197,11 +199,13 @@ model Volunteer {
   updatedAt       DateTime         @updatedAt
 
   club            Club             @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  event           Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
   user            User?            @relation(fields: [userId], references: [id])
   team            Team?            @relation(fields: [teamId], references: [id])
   skillRecords    VolunteerSkill[]
 
   @@index([clubId])
+  @@index([eventId])
   @@index([teamId])
   @@index([availability])
   @@index([currentWorkload])

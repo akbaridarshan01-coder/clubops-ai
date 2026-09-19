@@ -732,6 +732,7 @@ export const AuthPage: React.FC = () => {
                       <input
                         type="date"
                         required
+                        min={new Date().toISOString().split('T')[0]}
                         value={eventData.date}
                         onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
                         className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none"

@@ -1,8 +1,9 @@
 import { prisma } from '../../db/prisma.js';
 
 export class VolunteersService {
-  async getVolunteers(clubId: string, teamId?: string) {
+  async getVolunteers(clubId: string, eventId?: string, teamId?: string) {
     const where: any = { clubId };
+    if (eventId) where.eventId = eventId;
     if (teamId) where.teamId = teamId;
 
     return await prisma.volunteer.findMany({
@@ -16,6 +17,7 @@ export class VolunteersService {
   }
 
   async createVolunteer(clubId: string, data: {
+    eventId?: string;
     name: string;
     email: string;
     phone?: string;
@@ -26,6 +28,7 @@ export class VolunteersService {
     const volunteer = await prisma.volunteer.create({
       data: {
         clubId,
+        eventId: data.eventId || null,
         name: data.name,
         email: data.email,
         phone: data.phone,

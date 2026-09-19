@@ -47,7 +47,7 @@ export const VolunteersPage: React.FC = () => {
   const loadVolunteers = async () => {
     if (!currentClub?.id) return;
     try {
-      const data: any = await api.getVolunteers(currentClub.id);
+      const data: any = await api.getVolunteers(currentClub.id, currentEvent?.id);
       setVolunteers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load volunteers:', err);
@@ -56,7 +56,7 @@ export const VolunteersPage: React.FC = () => {
 
   useEffect(() => {
     loadVolunteers();
-  }, [currentClub?.id]);
+  }, [currentClub?.id, currentEvent?.id]);
 
   const tasks = currentEvent?.tasks || [];
   const teams = currentClub?.teams || [];
@@ -216,6 +216,7 @@ export const VolunteersPage: React.FC = () => {
       } else {
         await api.createVolunteer({
           clubId: currentClub.id,
+          eventId: currentEvent?.id,
           name: formData.name.trim(),
           email: formData.email.trim(),
           phone: formData.phone.trim() || undefined,
@@ -223,7 +224,7 @@ export const VolunteersPage: React.FC = () => {
           skills: skillsArray,
           experienceYears: isNaN(expNum) ? 0 : expNum,
         });
-        setToastMessage(`✅ Volunteer "${formData.name.trim()}" added successfully!`);
+        setToastMessage(`✅ Volunteer "${formData.name.trim()}" added to this event's roster!`);
       }
 
       setTimeout(() => setToastMessage(null), 4000);

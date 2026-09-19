@@ -7,8 +7,9 @@ export class VolunteersController {
       const clubId = req.query.clubId as string;
       if (!clubId) return res.status(400).json({ error: 'clubId is required' });
 
+      const eventId = req.query.eventId as string | undefined;
       const teamId = req.query.teamId as string | undefined;
-      const volunteers = await volunteersService.getVolunteers(clubId, teamId);
+      const volunteers = await volunteersService.getVolunteers(clubId, eventId, teamId);
       return res.json(volunteers);
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
@@ -17,12 +18,13 @@ export class VolunteersController {
 
   async createVolunteer(req: Request, res: Response) {
     try {
-      const { clubId, name, email, phone, teamId, skills, experienceYears } = req.body;
+      const { clubId, eventId, name, email, phone, teamId, skills, experienceYears } = req.body;
       if (!clubId || !name || !email) {
         return res.status(400).json({ error: 'clubId, name, and email are required.' });
       }
 
       const volunteer = await volunteersService.createVolunteer(clubId, {
+        eventId,
         name,
         email,
         phone,

@@ -156,44 +156,64 @@ export const TasksPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
-          <input
-            type="text"
-            placeholder="Filter tasks by title or tag..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
-          />
+      {/* No event selected */}
+      {!currentEvent && (
+        <div className="flex flex-col items-center justify-center py-24 space-y-3 text-center">
+          <CheckSquare className="w-10 h-10 text-slate-600" />
+          <p className="text-slate-400 font-semibold">No event selected</p>
+          <p className="text-xs text-slate-500">Select an event from the sidebar to view its tasks and roadmap.</p>
         </div>
+      )}
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
-          <button
-            onClick={() => setSelectedTeam('ALL')}
-            className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap ${
-              selectedTeam === 'ALL' ? 'bg-primary-600 text-white' : 'bg-background-card border border-border text-slate-400'
-            }`}
-          >
-            All Teams
-          </button>
-          {teams.map((tm) => (
-            <button
-              key={tm.id}
-              onClick={() => setSelectedTeam(tm.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap ${
-                selectedTeam === tm.id ? 'bg-primary-600 text-white' : 'bg-background-card border border-border text-slate-400'
-              }`}
-            >
-              {tm.name.split(' ')[0]}
-            </button>
-          ))}
+      {/* Event selected but no tasks yet */}
+      {currentEvent && tasks.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 space-y-3 text-center">
+          <CheckSquare className="w-10 h-10 text-slate-600" />
+          <p className="text-slate-300 font-semibold">No tasks for "{currentEvent.name}" yet</p>
+          <p className="text-xs text-slate-500">Click <span className="text-primary-400 font-bold">+ New Task</span> to add the first deliverable for this event.</p>
         </div>
-      </div>
+      )}
+
+      {/* Filter Bar — only show when there are tasks */}
+      {currentEvent && tasks.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+              <input
+                type="text"
+                placeholder="Filter tasks by title or tag..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
+              <button
+                onClick={() => setSelectedTeam('ALL')}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap ${
+                  selectedTeam === 'ALL' ? 'bg-primary-600 text-white' : 'bg-background-card border border-border text-slate-400'
+                }`}
+              >
+                All Teams
+              </button>
+              {teams.map((tm) => (
+                <button
+                  key={tm.id}
+                  onClick={() => setSelectedTeam(tm.id)}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap ${
+                    selectedTeam === tm.id ? 'bg-primary-600 text-white' : 'bg-background-card border border-border text-slate-400'
+                  }`}
+                >
+                  {tm.name.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+      )}
 
       {/* VIEW 1: KANBAN BOARD */}
-      {view === 'KANBAN' && (
+      {currentEvent && tasks.length > 0 && view === 'KANBAN' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
           {columns.map((col) => {
             const colTasks = filteredTasks.filter(t => t.status === col);
@@ -260,7 +280,7 @@ export const TasksPage: React.FC = () => {
       )}
 
       {/* VIEW 2: LIST TABLE */}
-      {view === 'LIST' && (
+      {currentEvent && tasks.length > 0 && view === 'LIST' && (
         <div className="bg-background-card border border-border rounded-3xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
@@ -309,9 +329,9 @@ export const TasksPage: React.FC = () => {
       )}
 
       {/* VIEW 3: TIMELINE ROADMAP */}
-      {view === 'TIMELINE' && (
+      {currentEvent && tasks.length > 0 && view === 'TIMELINE' && (
         <div className="bg-background-card border border-border rounded-3xl p-6 space-y-4">
-          <div className="text-xs font-semibold text-slate-400">Sprint 3 Gantt Roadmap:</div>
+          <div className="text-xs font-semibold text-slate-400">Gantt Roadmap — {currentEvent.name}:</div>
           <div className="space-y-3">
             {filteredTasks.slice(0, 10).map((t, idx) => (
               <div key={t.id} className="space-y-1">
