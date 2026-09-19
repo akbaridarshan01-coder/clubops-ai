@@ -77,9 +77,9 @@ export const AuthPage: React.FC = () => {
     name: '',
     type: 'Hackathon',
     date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    expectedParticipants: 0,
+    expectedParticipants: '',
     location: '',
-    budget: 0,
+    budget: '',
   });
 
   // Login Form State
@@ -190,6 +190,8 @@ export const AuthPage: React.FC = () => {
       await api.createEvent({
         clubId: createdClub?.id || (await api.getMyClubs() as any[])[0]?.id,
         ...eventData,
+        expectedParticipants: Number(eventData.expectedParticipants) || 500,
+        budget: Number(eventData.budget) || 0,
       });
       await refreshClubsAndEvents();
       navigate('/mission-control');
@@ -739,11 +741,11 @@ export const AuthPage: React.FC = () => {
                     <div>
                       <label className="block text-xs font-medium text-slate-300 mb-1">Expected Attendees</label>
                       <input
-                        type="number"
-                        required
+                        type="text"
+                        placeholder="e.g. 500"
                         value={eventData.expectedParticipants}
-                        onChange={(e) => setEventData({ ...eventData, expectedParticipants: Number(e.target.value) })}
-                        className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none"
+                        onChange={(e) => setEventData({ ...eventData, expectedParticipants: e.target.value })}
+                        className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
                       />
                     </div>
                   </div>

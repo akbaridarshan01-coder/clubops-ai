@@ -37,6 +37,38 @@ export class VolunteersController {
     }
   }
 
+  async updateVolunteer(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { name, email, phone, teamId, skills, experienceYears, availability, currentWorkload } = req.body;
+
+      const volunteer = await volunteersService.updateVolunteer(id, {
+        name,
+        email,
+        phone,
+        teamId: teamId === '' ? null : teamId,
+        skills: skills !== undefined ? skills : undefined,
+        experienceYears: experienceYears !== undefined ? (Number(experienceYears) || 0) : undefined,
+        availability,
+        currentWorkload,
+      });
+
+      return res.json(volunteer);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
+  async deleteVolunteer(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await volunteersService.deleteVolunteer(id);
+      return res.json({ success: true, message: 'Volunteer removed successfully.' });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   async matchForTask(req: Request, res: Response) {
     try {
       const taskId = req.params.taskId;

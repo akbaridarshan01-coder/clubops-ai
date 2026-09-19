@@ -59,6 +59,8 @@ export const api = {
     return request(`/volunteers${q}`);
   },
   createVolunteer: (data: any) => request('/volunteers', { method: 'POST', body: JSON.stringify(data) }),
+  updateVolunteer: (id: string, data: any) => request(`/volunteers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteVolunteer: (id: string) => request(`/volunteers/${id}`, { method: 'DELETE' }),
   matchVolunteersForTask: (taskId: string) => request(`/volunteers/match/${taskId}`),
 
   // Meetings

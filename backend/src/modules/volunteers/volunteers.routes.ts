@@ -8,6 +8,8 @@ router.use(authenticateJwt as any);
 
 router.get('/', volunteersController.getVolunteers as any);
 router.post('/', volunteersController.createVolunteer as any);
+router.put('/:id', volunteersController.updateVolunteer as any);
+router.delete('/:id', volunteersController.deleteVolunteer as any);
 router.get('/match/:taskId', volunteersController.matchForTask as any);
 
 export default router;

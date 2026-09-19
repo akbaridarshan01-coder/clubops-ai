@@ -86,6 +86,7 @@ export class ClubsService {
     const owned = await prisma.club.findMany({
       where: { ownerId: userId },
       include: {
+        teams: true,
         events: { take: 5, orderBy: { createdAt: 'desc' } },
         _count: { select: { members: true, events: true } },
       },
@@ -96,6 +97,7 @@ export class ClubsService {
       include: {
         club: {
           include: {
+            teams: true,
             events: { take: 5, orderBy: { createdAt: 'desc' } },
             _count: { select: { members: true, events: true } },
           },

@@ -10,7 +10,9 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Briefcase
+  Briefcase,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import { useEvent } from '../context/EventContext.js';
 import { Volunteer } from '../types/index.js';
@@ -26,9 +28,11 @@ export const VolunteersPage: React.FC = () => {
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Add Volunteer Modal State
+  // Add/Edit Volunteer Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingVolunteer, setEditingVolunteer] = useState<Volunteer | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +40,7 @@ export const VolunteersPage: React.FC = () => {
     phone: '',
     teamId: '',
     skills: '',
-    experienceYears: 1,
+    experienceYears: '',
   });
 
   const loadVolunteers = async () => {
@@ -96,7 +100,65 @@ export const VolunteersPage: React.FC = () => {
     }
   };
 
-  const handleCreateVolunteer = async (e: React.FormEvent) => {
+  const handleOpenAdd = () => {
+    setEditingVolunteer(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      teamId: '',
+      skills: '',
+      experienceYears: '',
+    });
+    setFormError(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEdit = (vol: Volunteer) => {
+    setEditingVolunteer(vol);
+    let skillsStr = '';
+    if (vol.skills) {
+      try {
+        const parsed = JSON.parse(vol.skills);
+        skillsStr = Array.isArray(parsed) ? parsed.join(', ') : String(parsed);
+      } catch {
+        skillsStr = String(vol.skills);
+      }
+    }
+    setFormData({
+      name: vol.name || '',
+      email: vol.email || '',
+      phone: vol.phone || '',
+      teamId: vol.teamId || '',
+      skills: skillsStr,
+      experienceYears: vol.experienceYears !== undefined && vol.experienceYears !== null ? String(vol.experienceYears) : '',
+    });
+    setFormError(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleDeleteVolunteer = async (vol: Volunteer) => {
+    if (!window.confirm(`Are you sure you want to remove "${vol.name}" from the roster?`)) {
+      return;
+    }
+    setDeletingId(vol.id);
+    try {
+      await api.deleteVolunteer(vol.id);
+      setToastMessage(`🗑️ Volunteer "${vol.name}" removed successfully.`);
+      setTimeout(() => setToastMessage(null), 4000);
+      await loadVolunteers();
+      if (selectedTaskForMatch) {
+        handleMatchForTask(selectedTaskForMatch);
+      }
+    } catch (err: any) {
+      setToastMessage(`❌ Failed to remove volunteer: ${err.message}`);
+      setTimeout(() => setToastMessage(null), 4000);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleSaveVolunteer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentClub?.id) {
       setFormError('Please select or create a club first.');
@@ -116,30 +178,48 @@ export const VolunteersPage: React.FC = () => {
         .map(s => s.trim())
         .filter(Boolean);
 
-      await api.createVolunteer({
-        clubId: currentClub.id,
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || undefined,
-        teamId: formData.teamId || undefined,
-        skills: skillsArray,
-        experienceYears: Number(formData.experienceYears) || 1,
-      });
+      const expNum = formData.experienceYears.trim() === '' ? 0 : Number(formData.experienceYears);
 
-      setToastMessage(`✅ Volunteer "${formData.name.trim()}" added successfully!`);
+      if (editingVolunteer) {
+        await api.updateVolunteer(editingVolunteer.id, {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || undefined,
+          teamId: formData.teamId || null,
+          skills: skillsArray,
+          experienceYears: isNaN(expNum) ? 0 : expNum,
+        });
+        setToastMessage(`✅ Volunteer "${formData.name.trim()}" updated successfully!`);
+      } else {
+        await api.createVolunteer({
+          clubId: currentClub.id,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || undefined,
+          teamId: formData.teamId || undefined,
+          skills: skillsArray,
+          experienceYears: isNaN(expNum) ? 0 : expNum,
+        });
+        setToastMessage(`✅ Volunteer "${formData.name.trim()}" added successfully!`);
+      }
+
       setTimeout(() => setToastMessage(null), 4000);
       setIsAddModalOpen(false);
+      setEditingVolunteer(null);
       setFormData({
         name: '',
         email: '',
         phone: '',
         teamId: '',
         skills: '',
-        experienceYears: 1,
+        experienceYears: '',
       });
       await loadVolunteers();
+      if (selectedTaskForMatch) {
+        handleMatchForTask(selectedTaskForMatch);
+      }
     } catch (err: any) {
-      setFormError(err.message || 'Failed to create volunteer.');
+      setFormError(err.message || 'Failed to save volunteer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -194,10 +274,7 @@ export const VolunteersPage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => {
-              setFormError(null);
-              setIsAddModalOpen(true);
-            }}
+            onClick={handleOpenAdd}
             className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold shadow-glow transition-all flex items-center space-x-1.5 whitespace-nowrap"
           >
             <UserPlus className="w-4 h-4" />
@@ -321,10 +398,7 @@ export const VolunteersPage: React.FC = () => {
             </p>
           </div>
           <button
-            onClick={() => {
-              setFormError(null);
-              setIsAddModalOpen(true);
-            }}
+            onClick={handleOpenAdd}
             className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold shadow-glow transition-all inline-flex items-center space-x-2"
           >
             <UserPlus className="w-4 h-4" />
@@ -351,15 +425,36 @@ export const VolunteersPage: React.FC = () => {
                 className="p-5 rounded-2xl bg-background-card border border-border hover:border-border-highlight transition-all space-y-3 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-white">{vol.name}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-white truncate">{vol.name}</h3>
                       <div className="text-xs text-slate-400 truncate">{vol.email}</div>
                       {vol.phone && <div className="text-[10px] text-slate-500 mt-0.5">{vol.phone}</div>}
                     </div>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${getWorkloadBadge(vol.currentWorkload)}`}>
-                      {vol.currentWorkload}
-                    </span>
+                    <div className="flex items-center space-x-1.5 flex-shrink-0">
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${getWorkloadBadge(vol.currentWorkload)}`}>
+                        {vol.currentWorkload}
+                      </span>
+                      <button
+                        onClick={() => handleOpenEdit(vol)}
+                        title="Edit volunteer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-primary-400 hover:bg-white/5 transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteVolunteer(vol)}
+                        disabled={deletingId === vol.id}
+                        title="Remove volunteer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === vol.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
@@ -379,8 +474,13 @@ export const VolunteersPage: React.FC = () => {
                 </div>
 
                 <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Team: <strong className="text-slate-200">{vol.team?.name || 'General Operations'}</strong></span>
-                  <span className="flex items-center space-x-1 text-amber-400 font-semibold">
+                  <div className="flex items-center space-x-1.5 truncate">
+                    <span className="truncate">Team: <strong className="text-slate-200">{vol.team?.name || 'General Operations'}</strong></span>
+                    {vol.experienceYears !== undefined && vol.experienceYears !== null && (
+                      <span className="text-slate-500 font-mono">• {vol.experienceYears}y exp</span>
+                    )}
+                  </div>
+                  <span className="flex items-center space-x-1 text-amber-400 font-semibold flex-shrink-0">
                     <Star className="w-3 h-3 fill-current" />
                     <span>{Number(vol.rating || 4.5).toFixed(1)}</span>
                   </span>
@@ -398,9 +498,11 @@ export const VolunteersPage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-xl bg-primary-500/20 text-primary-400 flex items-center justify-center">
-                  <UserPlus className="w-4 h-4" />
+                  {editingVolunteer ? <Edit2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
                 </div>
-                <h3 className="text-base font-bold text-white">Add Volunteer to Roster</h3>
+                <h3 className="text-base font-bold text-white">
+                  {editingVolunteer ? 'Edit Volunteer Details' : 'Add Volunteer to Roster'}
+                </h3>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -417,7 +519,7 @@ export const VolunteersPage: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleCreateVolunteer} className="space-y-3.5">
+            <form onSubmit={handleSaveVolunteer} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
                 <input
@@ -473,12 +575,11 @@ export const VolunteersPage: React.FC = () => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Experience (Years)</label>
                   <input
-                    type="number"
-                    min="0"
-                    step="0.5"
+                    type="text"
+                    placeholder="e.g. 1"
                     value={formData.experienceYears}
-                    onChange={(e) => setFormData({ ...formData, experienceYears: Number(e.target.value) || 1 })}
-                    className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none"
+                    onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
+                    className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -518,7 +619,7 @@ export const VolunteersPage: React.FC = () => {
                       <span>Saving...</span>
                     </>
                   ) : (
-                    <span>Add Volunteer</span>
+                    <span>{editingVolunteer ? 'Save Changes' : 'Add Volunteer'}</span>
                   )}
                 </button>
               </div>
