@@ -62,20 +62,34 @@ export const AnnouncementsPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const [sending, setSending] = useState(false);
+
   const handleSendBroadcast = async () => {
     if (!currentEvent || !generated) return;
+    setSending(true);
     try {
-      await api.createAnnouncement({
+      const res: any = await api.createAnnouncement({
         eventId: currentEvent.id,
         title: generated.title,
         channel: generated.channel,
         content: generated.content,
         targetAudience: generated.targetAudience,
       });
-      setToastMessage(`Broadcast dispatched successfully via ${generated.channel}!`);
-      setTimeout(() => setToastMessage(null), 4000);
-    } catch (err) {
+      const summary = res?.deliverySummary;
+      if (summary && summary.emailsSent > 0) {
+        setToastMessage(`✉️ Real emails successfully delivered to ${summary.emailsSent} recipient(s)!`);
+      } else if (summary && summary.totalRecipients === 0) {
+        setToastMessage(`⚠️ Announcement saved, but no volunteers found registered with email for this event.`);
+      } else {
+        setToastMessage(`Broadcast dispatched successfully via ${generated.channel}!`);
+      }
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (err: any) {
       console.error(err);
+      setToastMessage(`Failed to send broadcast: ${err.message || 'Unknown error'}`);
+      setTimeout(() => setToastMessage(null), 5000);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -190,10 +204,11 @@ export const AnnouncementsPage: React.FC = () => {
 
                 <button
                   onClick={handleSendBroadcast}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5"
+                  disabled={sending || loading}
+                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send Broadcast</span>
+                  {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>{sending ? 'Sending Emails...' : 'Send Broadcast'}</span>
                 </button>
               </div>
             </div>
