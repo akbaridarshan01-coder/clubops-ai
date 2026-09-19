@@ -140,7 +140,7 @@ export class VolunteersService {
       }
       let matchedSkills: string[] = [];
 
-      // 1. Skill keyword matches — strictly check if skill is in task title/desc/tags
+      // 1. Skill keyword matches
       volSkills.forEach(s => {
         const cleanSkill = s.trim().toLowerCase();
         if (cleanSkill && (taskText.includes(cleanSkill) || cleanSkill.split(/[\s-]+/).some(part => part.length > 2 && taskText.includes(part)))) {
@@ -148,13 +148,8 @@ export class VolunteersService {
         }
       });
 
-      // If NO skills matched, exclude volunteer entirely — no arbitrary 20% match
-      if (matchedSkills.length === 0) {
-        return null;
-      }
-
-      // Calculate pure skill match percentage
-      const rawSkillPercentage = Math.round((matchedSkills.length / Math.max(volSkills.length, 1)) * 100);
+      const isSameTeam = task.teamId && vol.teamId === task.teamId;
+      const isUnassigned = (vol.assignedHours || 0) === 0;
 
       // Workload multiplier
       let workloadFactor = 1.0;
@@ -162,12 +157,31 @@ export class VolunteersService {
       else if (vol.currentWorkload === 'HIGH') workloadFactor = 0.6;
       else if (vol.currentWorkload === 'OVERLOADED') workloadFactor = 0.25;
 
-      // Availability penalty
       if (vol.availability !== 'AVAILABLE') {
         workloadFactor *= 0.4;
       }
 
-      const finalPercentage = Math.min(99, Math.max(1, Math.round(rawSkillPercentage * workloadFactor)));
+      let finalPercentage = 0;
+      let explanation = '';
+
+      if (matchedSkills.length > 0) {
+        // High Tier: Direct skill match
+        const rawSkillPct = Math.round((matchedSkills.length / Math.max(volSkills.length, 1)) * 80);
+        const teamBonus = isSameTeam ? 15 : 0;
+        finalPercentage = Math.min(98, Math.max(50, Math.round((rawSkillPct + teamBonus) * workloadFactor)));
+        explanation = `Matches skills: ${matchedSkills.join(', ')} (${matchedSkills.length}/${volSkills.length}). Workload is ${vol.currentWorkload}.`;
+      } else if (isSameTeam && (isUnassigned || vol.currentWorkload === 'LOW')) {
+        // Department Tier: Same department and available
+        finalPercentage = Math.round(45 * workloadFactor);
+        explanation = `Member of ${vol.team?.name || 'assigned team'}, currently unassigned (0 tasks) — ready for allocation.`;
+      } else if (isUnassigned && vol.availability === 'AVAILABLE') {
+        // Available Capacity Tier: Volunteer has 0 tasks assigned yet
+        finalPercentage = Math.round(35 * workloadFactor);
+        explanation = `Available volunteer with 0 tasks assigned (${vol.experienceYears || 1}y exp) — full capacity ready.`;
+      } else {
+        // Busy or overloaded volunteers with 0 skill match are excluded
+        return null;
+      }
 
       return {
         volunteer: {
@@ -183,11 +197,11 @@ export class VolunteersService {
         matchPercentage: finalPercentage,
         matchedSkills,
         workload: vol.currentWorkload,
-        explanation: `Matches skills: ${matchedSkills.join(', ')} (${matchedSkills.length}/${volSkills.length}). Workload is ${vol.currentWorkload}.`,
+        explanation,
       };
     });
 
-    // Filter out non-matching volunteers, sort descending, return top 5
+    // Filter out null candidates, sort descending by match percentage, return top 5
     return (matches.filter(Boolean) as NonNullable<typeof matches[0]>[])
       .sort((a, b) => b.matchPercentage - a.matchPercentage)
       .slice(0, 5);
