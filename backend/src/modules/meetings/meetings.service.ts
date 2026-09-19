@@ -198,15 +198,33 @@ export class MeetingsService {
         if (line.match(/will|need|must|action|todo|assign|responsible|task/i) || line.includes(':')) {
           const parts = line.split(':');
           const owner = parts.length > 1 ? parts[0].trim() : 'Team Lead';
-          const taskContent = parts.length > 1 ? parts[1].trim() : line.trim();
+          const taskContent = parts.length > 1 ? parts.slice(1).join(':').trim() : line.trim();
+
+          // Derive a meaningful task title from the topic content
+          const extractedTitle = this.deriveTaskTitle(taskContent, owner);
+
+          // Infer team from the topic content keywords
+          const suggestedTeam = this.inferTeamFromContent(taskContent);
+
+          // Infer priority from content keywords
+          const suggestedPriority: ExtractedActionItem['suggestedPriority'] =
+            taskContent.match(/urgent|critical|asap|immediately|block|permit|generator|deadline/i)
+              ? 'CRITICAL'
+              : taskContent.match(/sponsor|payment|contract|launch|deploy|go.?live/i)
+              ? 'HIGH'
+              : idx === 0
+              ? 'CRITICAL'
+              : idx < 3
+              ? 'HIGH'
+              : 'MEDIUM';
 
           dynamicItems.push({
             rawText: line,
-            extractedTitle: taskContent.length > 60 ? taskContent.substring(0, 57) + '...' : taskContent,
+            extractedTitle,
             suggestedOwner: owner,
             suggestedDeadline: new Date(now + (idx + 2) * day).toISOString(),
-            suggestedPriority: idx === 0 ? 'CRITICAL' : idx < 3 ? 'HIGH' : 'MEDIUM',
-            suggestedTeam: 'Core Leadership',
+            suggestedPriority,
+            suggestedTeam,
           });
         }
       });
@@ -216,6 +234,59 @@ export class MeetingsService {
 
     return fallbackList;
   }
+
+  /** Build a concise, action-oriented task title from raw topic text. */
+  private deriveTaskTitle(content: string, owner: string): string {
+    // Strip filler words and normalise
+    let title = content
+      .replace(/^(i will|we will|i need to|we need to|please|you need to|make sure to|ensure that)\s+/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Capitalise first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+
+    // If title is very short (just a verb or a single word), prefix with owner's name
+    if (title.split(' ').length < 3) {
+      title = `${owner} – ${title}`;
+    }
+
+    // Trim to 80 chars max without cutting a word
+    if (title.length > 80) {
+      title = title.substring(0, 77).trimEnd() + '...';
+    }
+
+    return title;
+  }
+
+  /** Infer the most appropriate team based on keywords in the task content. */
+  private inferTeamFromContent(content: string): string {
+    const lower = content.toLowerCase();
+
+    if (lower.match(/permit|auditorium|venue|stage|generator|power|load.?in|truss|diesel/))
+      return 'Logistics & Operations';
+
+    if (lower.match(/sponsor|contract|google|amazon|keynote|outreach|partnership|fund/))
+      return 'Sponsorship & Outreach';
+
+    if (lower.match(/code|qr|scanner|app|platform|deploy|build|software|website|portal|api|server/))
+      return 'Technical & Platform';
+
+    if (lower.match(/instagram|reel|poster|design|print|banner|badge|lanyard|sticker|social|media|whatsapp|broadcast/))
+      return 'Marketing & Media';
+
+    if (lower.match(/food|snack|catering|drink|hospitality|registration|desk|volunteer|check.?in|queue/))
+      return 'Hospitality & Registration';
+
+    if (lower.match(/budget|finance|treasurer|payment|po |purchase order|bank|account|expense/))
+      return 'Finance & Treasury';
+
+    if (lower.match(/risk|safety|security|backup|contingency|emergency|incident/))
+      return 'Risk & Safety';
+
+    return 'Core Leadership';
+  }
 }
+
 
 export const meetingsService = new MeetingsService();
