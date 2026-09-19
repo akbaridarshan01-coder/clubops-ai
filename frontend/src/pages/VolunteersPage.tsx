@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Briefcase,
   Edit2,
-  Trash2
+  Trash2,
+  UserMinus
 } from 'lucide-react';
 import { useEvent } from '../context/EventContext.js';
 import { Volunteer } from '../types/index.js';
@@ -97,6 +98,28 @@ export const VolunteersPage: React.FC = () => {
       setTimeout(() => setToastMessage(null), 4000);
     } finally {
       setAssigningId(null);
+    }
+  };
+
+  const [unassigningTaskId, setUnassigningTaskId] = useState<string | null>(null);
+
+  const handleUnassignTask = async (taskId: string) => {
+    setUnassigningTaskId(taskId);
+    try {
+      await api.assignTask(taskId, null);
+      setToastMessage('✅ Task removed from volunteer successfully!');
+      setTimeout(() => setToastMessage(null), 4000);
+      await refreshEvent();
+      await loadVolunteers();
+      if (selectedTaskForMatch) {
+        handleMatchForTask(selectedTaskForMatch);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setToastMessage(`❌ Failed to remove task: ${err.message}`);
+      setTimeout(() => setToastMessage(null), 4000);
+    } finally {
+      setUnassigningTaskId(null);
     }
   };
 
@@ -320,6 +343,27 @@ export const VolunteersPage: React.FC = () => {
               </option>
             ))}
           </select>
+          {(() => {
+            const currentSelTask = tasks.find(t => t.id === selectedTaskForMatch);
+            if (!currentSelTask?.assignee) return null;
+            return (
+              <div className="flex items-center space-x-2 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2 text-xs">
+                <span className="text-slate-300">Assigned: <strong className="text-white">{currentSelTask.assignee.name}</strong></span>
+                <button
+                  onClick={() => handleUnassignTask(currentSelTask.id)}
+                  disabled={unassigningTaskId === currentSelTask.id}
+                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-[11px] transition-colors flex items-center space-x-1 disabled:opacity-50"
+                >
+                  {unassigningTaskId === currentSelTask.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <UserMinus className="w-3 h-3" />
+                  )}
+                  <span>Remove Task</span>
+                </button>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Matched Volunteers Showcase */}
@@ -346,23 +390,56 @@ export const VolunteersPage: React.FC = () => {
                   <p className="text-[11px] text-slate-300 leading-relaxed">
                     {m.explanation}
                   </p>
-                  <button
-                    onClick={() => handleAssignVolunteer(m.volunteer.id)}
-                    disabled={assigningId === m.volunteer.id}
-                    className="w-full mt-2 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold shadow-sm transition-colors flex items-center justify-center space-x-1 disabled:opacity-50"
-                  >
-                    {assigningId === m.volunteer.id ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Assigning...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Assign to Task</span>
-                      </>
-                    )}
-                  </button>
+                  {(() => {
+                    const currentSelTask = tasks.find(t => t.id === selectedTaskForMatch);
+                    const isAlreadyAssigned = currentSelTask?.assignee && (
+                      currentSelTask.assigneeId === m.volunteer.userId || 
+                      currentSelTask.assignee.email === m.volunteer.email || 
+                      currentSelTask.assignee.name === m.volunteer.name
+                    );
+
+                    if (isAlreadyAssigned) {
+                      return (
+                        <button
+                          onClick={() => handleUnassignTask(selectedTaskForMatch)}
+                          disabled={unassigningTaskId === selectedTaskForMatch}
+                          className="w-full mt-2 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold shadow-sm transition-colors flex items-center justify-center space-x-1 disabled:opacity-50"
+                        >
+                          {unassigningTaskId === selectedTaskForMatch ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Removing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserMinus className="w-3.5 h-3.5" />
+                              <span>Remove Task</span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <button
+                        onClick={() => handleAssignVolunteer(m.volunteer.id)}
+                        disabled={assigningId === m.volunteer.id}
+                        className="w-full mt-2 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold shadow-sm transition-colors flex items-center justify-center space-x-1 disabled:opacity-50"
+                      >
+                        {assigningId === m.volunteer.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Assigning...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Assign to Task</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -471,6 +548,43 @@ export const VolunteersPage: React.FC = () => {
                       <span className="text-[10px] text-slate-500 italic">No specific skills listed</span>
                     )}
                   </div>
+
+                  {/* Assigned Tasks for this volunteer */}
+                  {(() => {
+                    const volTasks = tasks.filter(t => 
+                      (vol.userId && t.assigneeId === vol.userId) || 
+                      (vol.email && t.assignee?.email === vol.email) || 
+                      (t.assignee?.name === vol.name)
+                    );
+                    if (volTasks.length === 0) return null;
+                    return (
+                      <div className="mt-2.5 pt-2.5 border-t border-white/5 space-y-1.5">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                          Assigned Tasks ({volTasks.length}):
+                        </span>
+                        <div className="space-y-1">
+                          {volTasks.map(t => (
+                            <div key={t.id} className="flex items-center justify-between text-[11px] bg-white/5 rounded-lg px-2.5 py-1 text-slate-200">
+                              <span className="truncate flex-1 pr-2 font-medium">[{t.priority}] {t.title}</span>
+                              <button
+                                onClick={() => handleUnassignTask(t.id)}
+                                disabled={unassigningTaskId === t.id}
+                                title="Remove task from volunteer"
+                                className="text-slate-400 hover:text-rose-400 transition-colors flex items-center space-x-1 text-[10px] bg-rose-500/10 hover:bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/20 disabled:opacity-50 flex-shrink-0"
+                              >
+                                {unassigningTaskId === t.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <X className="w-3 h-3" />
+                                )}
+                                <span>Remove</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">

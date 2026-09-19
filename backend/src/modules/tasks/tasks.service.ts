@@ -165,6 +165,32 @@ export class TasksService {
   }
 
   async assignTask(taskId: string, assigneeId: string | null) {
+    const existingTask = await prisma.task.findUnique({ where: { id: taskId } });
+    if (!existingTask) throw new Error('Task not found');
+
+    // If previously assigned to a user/volunteer, decrement their workload
+    if (existingTask.assigneeId) {
+      const prevVolunteer = await prisma.volunteer.findFirst({
+        where: { userId: existingTask.assigneeId },
+      });
+      if (prevVolunteer) {
+        const removedHours = existingTask.estimatedHours || 4;
+        const newAssignedHours = Math.max(0, (prevVolunteer.assignedHours || 0) - removedHours);
+        let newWorkload = 'LOW';
+        if (newAssignedHours > 16) newWorkload = 'OVERLOADED';
+        else if (newAssignedHours > 10) newWorkload = 'HIGH';
+        else if (newAssignedHours > 4) newWorkload = 'MEDIUM';
+
+        await prisma.volunteer.update({
+          where: { id: prevVolunteer.id },
+          data: {
+            assignedHours: newAssignedHours,
+            currentWorkload: newWorkload,
+          },
+        });
+      }
+    }
+
     if (!assigneeId) {
       return await this.updateTask(taskId, { assigneeId: null });
     }
@@ -207,8 +233,7 @@ export class TasksService {
       targetUserId = user.id;
 
       // Update volunteer workload and assigned hours
-      const task = await prisma.task.findUnique({ where: { id: taskId } });
-      const addedHours = task?.estimatedHours || 4;
+      const addedHours = existingTask.estimatedHours || 4;
       const newAssignedHours = (volunteer.assignedHours || 0) + addedHours;
       let newWorkload = 'LOW';
       if (newAssignedHours > 16) newWorkload = 'OVERLOADED';

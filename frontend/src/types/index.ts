@@ -78,6 +78,7 @@ export interface Task {
 export interface Volunteer {
   id: string;
   clubId: string;
+  userId?: string | null;
   teamId?: string | null;
   name: string;
   email: string;
