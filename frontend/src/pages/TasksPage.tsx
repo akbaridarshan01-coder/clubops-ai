@@ -328,30 +328,198 @@ export const TasksPage: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW 3: TIMELINE ROADMAP */}
-      {currentEvent && tasks.length > 0 && view === 'TIMELINE' && (
-        <div className="bg-background-card border border-border rounded-3xl p-6 space-y-4">
-          <div className="text-xs font-semibold text-slate-400">Gantt Roadmap — {currentEvent.name}:</div>
-          <div className="space-y-3">
-            {filteredTasks.slice(0, 10).map((t, idx) => (
-              <div key={t.id} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-white truncate max-w-sm">{t.title}</span>
-                  <span className="text-[10px] text-slate-400">{new Date(t.deadline).toLocaleDateString()}</span>
-                </div>
-                <div className="w-full bg-background-subtle h-3 rounded-full overflow-hidden flex">
-                  <div
-                    style={{ width: `${Math.min(100, (idx + 1) * 12)}%` }}
-                    className={`h-full rounded-full transition-all ${
-                      t.status === 'DONE' ? 'bg-emerald-500' : t.status === 'BLOCKED' ? 'bg-amber-500' : 'bg-primary-500'
-                    }`}
-                  />
-                </div>
+      {/* VIEW 3: TIMELINE — Chronological Event Timeline */}
+      {currentEvent && tasks.length > 0 && view === 'TIMELINE' && (() => {
+        const now = new Date();
+
+        // Build unified timeline entries from all event data
+        const entries: {
+          date: Date;
+          label: string;
+          sublabel?: string;
+          type: 'event_created' | 'task' | 'meeting' | 'risk' | 'event_day' | 'event_end';
+          status?: string;
+          priority?: string;
+          isToday?: boolean;
+          isPast?: boolean;
+        }[] = [];
+
+        // Event created
+        if (currentEvent.createdAt) {
+          entries.push({
+            date: new Date(currentEvent.createdAt),
+            label: `Event Created: "${currentEvent.name}"`,
+            sublabel: `Type: ${currentEvent.type} · Location: ${currentEvent.location}`,
+            type: 'event_created',
+          });
+        }
+
+        // All task deadlines
+        tasks.forEach(t => {
+          entries.push({
+            date: new Date(t.deadline),
+            label: t.title,
+            sublabel: `${t.team?.name || 'General'} · ${t.estimatedHours || '?'}h estimated`,
+            type: 'task',
+            status: t.status,
+            priority: t.priority,
+          });
+        });
+
+        // Meetings
+        (currentEvent.meetings || []).forEach((m: any) => {
+          entries.push({
+            date: new Date(m.date),
+            label: m.title || 'Team Meeting',
+            sublabel: m.location || 'Meeting',
+            type: 'meeting',
+            status: m.status,
+          });
+        });
+
+        // Risks (by createdAt)
+        (currentEvent.risks || []).forEach((r: any) => {
+          entries.push({
+            date: new Date(r.createdAt),
+            label: `⚠ Risk: ${r.title}`,
+            sublabel: `${r.category} · ${r.severity} severity`,
+            type: 'risk',
+            status: r.status,
+          });
+        });
+
+        // Event day
+        entries.push({
+          date: new Date(currentEvent.date),
+          label: `🎯 EVENT DAY — ${currentEvent.name}`,
+          sublabel: currentEvent.location,
+          type: 'event_day',
+        });
+
+        // Event end (if provided)
+        if (currentEvent.endDate) {
+          entries.push({
+            date: new Date(currentEvent.endDate),
+            label: `🏁 Event Ends — ${currentEvent.name}`,
+            sublabel: 'Wrap-up & post-event activities begin',
+            type: 'event_end',
+          });
+        }
+
+        // Sort all entries chronologically
+        entries.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        const typeConfig: Record<string, { color: string; dot: string; badge: string }> = {
+          event_created: { color: 'text-sky-300', dot: 'bg-sky-500', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
+          task:          { color: 'text-white',   dot: 'bg-primary-500', badge: 'bg-primary-500/20 text-primary-300 border-primary-500/40' },
+          meeting:       { color: 'text-violet-300', dot: 'bg-violet-500', badge: 'bg-violet-500/20 text-violet-300 border-violet-500/40' },
+          risk:          { color: 'text-amber-300', dot: 'bg-amber-500', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+          event_day:     { color: 'text-emerald-300', dot: 'bg-emerald-500', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+          event_end:     { color: 'text-rose-300', dot: 'bg-rose-500', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
+        };
+
+        const statusBadge = (status?: string, priority?: string) => {
+          if (!status) return null;
+          const sColor: Record<string, string> = {
+            DONE: 'bg-emerald-500/20 text-emerald-300', IN_PROGRESS: 'bg-blue-500/20 text-blue-300',
+            BLOCKED: 'bg-rose-500/20 text-rose-300', TODO: 'bg-slate-500/20 text-slate-400',
+            IDENTIFIED: 'bg-amber-500/20 text-amber-300', MITIGATING: 'bg-orange-500/20 text-orange-300',
+            RESOLVED: 'bg-emerald-500/20 text-emerald-300',
+          };
+          const pColor: Record<string, string> = {
+            CRITICAL: 'bg-rose-500/20 text-rose-300', HIGH: 'bg-orange-500/20 text-orange-300',
+            MEDIUM: 'bg-yellow-500/20 text-yellow-300', LOW: 'bg-slate-500/20 text-slate-400',
+          };
+          return (
+            <span className="flex items-center gap-1 flex-wrap">
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${sColor[status] || 'bg-slate-500/20 text-slate-400'}`}>{status}</span>
+              {priority && <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${pColor[priority] || ''}`}>{priority}</span>}
+            </span>
+          );
+        };
+
+        // Today marker position
+        const todayIdx = entries.findIndex(e => e.date > now);
+
+        return (
+          <div className="bg-background-card border border-border rounded-3xl p-6 space-y-2">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <div>
+                <h3 className="text-sm font-bold text-white">{currentEvent.name} — Event Timeline</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">{entries.length} key dates · sorted chronologically</p>
               </div>
-            ))}
+              <div className="flex items-center gap-3 text-[10px]">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-500 inline-block"/>Created</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary-500 inline-block"/>Tasks</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500 inline-block"/>Meetings</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"/>Risks</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"/>Event Day</span>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="relative pt-2">
+              {/* Vertical line */}
+              <div className="absolute left-[19px] top-4 bottom-4 w-px bg-border" />
+
+              <div className="space-y-1">
+                {entries.map((entry, idx) => {
+                  const cfg = typeConfig[entry.type] || typeConfig.task;
+                  const isPast = entry.date < now;
+                  const isEventDay = entry.type === 'event_day';
+                  const isTodayLine = todayIdx === idx;
+
+                  return (
+                    <React.Fragment key={idx}>
+                      {/* "TODAY" marker */}
+                      {isTodayLine && (
+                        <div className="flex items-center gap-3 pl-10 py-1">
+                          <div className="h-px flex-1 bg-emerald-500/50 border-dashed border-t border-emerald-500" />
+                          <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/30 shrink-0">TODAY ↓</span>
+                          <div className="h-px flex-1 bg-emerald-500/50" />
+                        </div>
+                      )}
+
+                      <div className={`relative flex items-start gap-4 px-1 py-2.5 rounded-2xl transition-all ${
+                        isEventDay ? 'bg-emerald-500/8 border border-emerald-500/20' :
+                        isPast ? 'opacity-60' : 'hover:bg-background-subtle/60'
+                      }`}>
+                        {/* Dot */}
+                        <div className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 ${
+                          isEventDay ? 'border-emerald-500 bg-emerald-500/20' :
+                          isPast && entry.type === 'task' && entry.status === 'DONE' ? 'border-emerald-500 bg-emerald-500/20' :
+                          `border-border bg-background-subtle`
+                        }`}>
+                          <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${isPast && entry.type !== 'event_day' ? 'opacity-50' : ''}`} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <span className={`text-xs font-bold leading-snug ${isEventDay ? 'text-emerald-300 text-sm' : cfg.color} ${isPast && entry.status !== 'DONE' ? 'line-through opacity-70' : ''}`}>
+                              {entry.label}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {statusBadge(entry.status, entry.priority)}
+                              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border ${cfg.badge}`}>
+                                {entry.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: entry.date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })}
+                              </span>
+                            </div>
+                          </div>
+                          {entry.sublabel && (
+                            <p className="text-[10px] text-slate-500 mt-0.5 truncate">{entry.sublabel}</p>
+                          )}
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Create Task Modal */}
       {createModalOpen && (

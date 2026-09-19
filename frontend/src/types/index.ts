@@ -46,6 +46,8 @@ export interface Event {
   healthScore: number;
   currentMilestone?: string;
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
   club?: Club;
   tasks?: Task[];
   risks?: Risk[];
