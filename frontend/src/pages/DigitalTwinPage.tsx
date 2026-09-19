@@ -35,36 +35,36 @@ const TaskNode = ({ data }: any) => {
   const isDone = data.task.status === 'DONE';
   const isCritical = data.task.priority === 'CRITICAL';
 
-  let borderColor = 'border-border';
-  let bgColor = 'bg-background-card';
-  if (isDone) borderColor = 'border-emerald-500/50 bg-emerald-950/20';
-  else if (isBlocked) borderColor = 'border-amber-500/60 bg-amber-950/30';
-  else if (isCritical) borderColor = 'border-rose-500/60 bg-rose-950/20';
-  if (isSelected) borderColor = 'border-primary-400 ring-2 ring-primary-500/50 shadow-glow';
+  let borderColor = 'border-[#EAEFF7]';
+  let bgColor = 'bg-white';
+  if (isDone) borderColor = 'border-emerald-200 bg-emerald-50/40';
+  else if (isBlocked) borderColor = 'border-amber-200 bg-amber-50/40';
+  else if (isCritical) borderColor = 'border-rose-200 bg-rose-50/40';
+  if (isSelected) borderColor = 'border-[#8B5CF6] ring-2 ring-[#8B5CF6]/30 shadow-card';
 
   return (
-    <div className={`w-56 p-3.5 rounded-2xl border ${borderColor} ${bgColor} text-left shadow-md transition-all`}>
-      <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-primary-500" />
+    <div className={`w-56 p-3.5 rounded-2xl border ${borderColor} ${bgColor} text-left shadow-card transition-all`}>
+      <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-[#8B5CF6]" />
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-white/5 text-slate-300">
+        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-[#7A829D]">
           {data.task.team?.name?.split(' ')[0] || 'Task'}
         </span>
-        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-          isDone ? 'bg-emerald-500/20 text-emerald-300' : isBlocked ? 'bg-amber-500/20 text-amber-300' : 'bg-primary-500/20 text-primary-300'
+        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+          isDone ? 'bg-emerald-50 text-emerald-700' : isBlocked ? 'bg-amber-50 text-amber-700' : 'bg-purple-50 text-[#7C3AED]'
         }`}>
           {data.task.status}
         </span>
       </div>
-      <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+      <div className="text-xs font-bold text-[#191E35] leading-snug line-clamp-2">
         {data.task.title}
       </div>
-      <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400">
+      <div className="mt-2.5 pt-2 border-t border-[#EAEFF7] flex items-center justify-between text-[10px] text-[#7A829D]">
         <span>{new Date(data.task.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-        <span className="font-semibold text-slate-300 truncate max-w-[80px]">
+        <span className="font-semibold text-[#191E35] truncate max-w-[80px]">
           {data.task.assignee?.name || 'Unassigned'}
         </span>
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-accent-cyan" />
+      <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-[#8B5CF6]" />
     </div>
   );
 };
@@ -102,8 +102,8 @@ export const DigitalTwinPage: React.FC = () => {
             source: dep.dependsOnTaskId,
             target: task.id,
             animated: task.status === 'BLOCKED',
-            style: { stroke: task.status === 'BLOCKED' ? '#F59E0B' : '#6366F1', strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: task.status === 'BLOCKED' ? '#F59E0B' : '#6366F1' },
+            style: { stroke: task.status === 'BLOCKED' ? '#F59E0B' : '#8B5CF6', strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: task.status === 'BLOCKED' ? '#F59E0B' : '#8B5CF6' },
           });
         });
       }
@@ -147,27 +147,27 @@ export const DigitalTwinPage: React.FC = () => {
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col space-y-4">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAEFF7]">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="live-pulse" />
-            <h1 className="text-xl font-bold text-white flex items-center space-x-2">
-              <Network className="w-5 h-5 text-primary-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] animate-pulse" />
+            <h1 className="text-xl font-bold text-[#191E35] flex items-center space-x-2">
+              <Network className="w-5 h-5 text-[#8B5CF6]" />
               <span>Event Digital Twin</span>
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#7A829D] mt-0.5 font-medium">
             Real-time topological graph of tasks, teams, dependencies, and critical bottleneck paths.
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
-          <span className="text-xs text-slate-400">Click any node to inspect details & AI analysis</span>
+          <span className="text-xs text-[#7A829D] font-medium">Click any node to inspect details & AI analysis</span>
         </div>
       </div>
 
       {/* Main Flow Canvas with Slide-out Inspector Drawer */}
-      <div className="flex-1 relative rounded-3xl border border-border bg-background-card overflow-hidden">
+      <div className="flex-1 relative rounded-3xl border border-[#EAEFF7] bg-white overflow-hidden shadow-card">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -176,70 +176,70 @@ export const DigitalTwinPage: React.FC = () => {
           nodeTypes={nodeTypes}
           onNodeClick={onNodeClick}
           fitView
-          className="bg-background"
+          className="bg-[#F8FAFC]"
         >
-          <Background color="#1E293B" gap={20} size={1} />
-          <Controls className="!bg-background-card !border-border !text-slate-300" />
+          <Background color="#E2E8F0" gap={20} size={1} />
+          <Controls className="!bg-white !border-[#EAEFF7] !text-[#191E35] shadow-card rounded-xl" />
           <MiniMap 
-            nodeColor={(n: any) => n.data?.task?.status === 'DONE' ? '#10B981' : '#6366F1'}
-            className="!bg-background-card !border-border rounded-xl" 
+            nodeColor={(n: any) => n.data?.task?.status === 'DONE' ? '#10B981' : '#8B5CF6'}
+            className="!bg-white !border-[#EAEFF7] rounded-2xl shadow-card" 
           />
         </ReactFlow>
 
         {/* Node Inspector Flyout Panel */}
         {selectedTask && (
-          <div className="absolute top-4 right-4 w-80 sm:w-96 bg-background-card/95 backdrop-blur-xl border border-border-highlight rounded-2xl shadow-2xl p-5 z-20 animate-scale-in">
-            <div className="flex items-start justify-between pb-3 border-b border-border mb-4">
+          <div className="absolute top-4 right-4 w-80 sm:w-96 bg-white/95 backdrop-blur-xl border border-[#EAEFF7] rounded-3xl shadow-card p-5 z-20 animate-scale-in">
+            <div className="flex items-start justify-between pb-3 border-b border-[#EAEFF7] mb-4">
               <div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-primary-500/20 text-primary-300">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] font-bold">
                   NODE INSPECTION
                 </span>
-                <h3 className="text-sm font-bold text-white mt-1 leading-snug">{selectedTask.title}</h3>
+                <h3 className="text-sm font-bold text-[#191E35] mt-1.5 leading-snug">{selectedTask.title}</h3>
               </div>
-              <button onClick={() => setSelectedTask(null)} className="p-1 text-slate-400 hover:text-white">
+              <button onClick={() => setSelectedTask(null)} className="p-1 text-[#7A829D] hover:text-[#191E35]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Status</span>
-                <span className="font-semibold text-primary-300">{selectedTask.status}</span>
+              <div className="flex justify-between py-1 border-b border-[#EAEFF7]">
+                <span className="text-[#7A829D]">Status</span>
+                <span className="font-semibold text-[#7C3AED]">{selectedTask.status}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Priority</span>
-                <span className={`font-semibold ${selectedTask.priority === 'CRITICAL' ? 'text-rose-400' : 'text-amber-400'}`}>
+              <div className="flex justify-between py-1 border-b border-[#EAEFF7]">
+                <span className="text-[#7A829D]">Priority</span>
+                <span className={`font-semibold ${selectedTask.priority === 'CRITICAL' ? 'text-rose-600' : 'text-amber-600'}`}>
                   {selectedTask.priority}
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Workstream Team</span>
-                <span className="text-slate-200">{selectedTask.team?.name || 'Core Operations'}</span>
+              <div className="flex justify-between py-1 border-b border-[#EAEFF7]">
+                <span className="text-[#7A829D]">Workstream Team</span>
+                <span className="text-[#191E35] font-medium">{selectedTask.team?.name || 'Core Operations'}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Assignee</span>
-                <span className="text-slate-200">{selectedTask.assignee?.name || 'Unassigned'}</span>
+              <div className="flex justify-between py-1 border-b border-[#EAEFF7]">
+                <span className="text-[#7A829D]">Assignee</span>
+                <span className="text-[#191E35] font-medium">{selectedTask.assignee?.name || 'Unassigned'}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Target Deadline</span>
-                <span className="text-slate-200">{new Date(selectedTask.deadline).toLocaleDateString()}</span>
+              <div className="flex justify-between py-1 border-b border-[#EAEFF7]">
+                <span className="text-[#7A829D]">Target Deadline</span>
+                <span className="text-[#191E35] font-medium">{new Date(selectedTask.deadline).toLocaleDateString()}</span>
               </div>
             </div>
 
             {/* AI "Explain this" Button */}
-            <div className="mt-4 pt-3 border-t border-border">
+            <div className="mt-4 pt-3 border-t border-[#EAEFF7]">
               <button
                 onClick={handleExplainNode}
                 disabled={explaining}
-                className="w-full py-2.5 px-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-glow transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
               >
-                <Sparkles className="w-4 h-4 text-accent-cyan" />
+                <Sparkles className="w-4 h-4 text-white" />
                 <span>{explaining ? 'Analyzing Node...' : 'Explain this Node with AI'}</span>
               </button>
 
               {/* AI Explanation Box */}
               {aiExplanation && (
-                <div className="mt-3 p-3.5 rounded-xl bg-primary-950/40 border border-primary-500/30 text-xs text-slate-200 leading-relaxed max-h-48 overflow-y-auto animate-fade-in whitespace-pre-wrap">
+                <div className="mt-3 p-3.5 rounded-2xl bg-[#F5F3FF] border border-purple-100 text-xs text-[#191E35] leading-relaxed max-h-48 overflow-y-auto animate-fade-in whitespace-pre-wrap font-medium">
                   {aiExplanation}
                 </div>
               )}

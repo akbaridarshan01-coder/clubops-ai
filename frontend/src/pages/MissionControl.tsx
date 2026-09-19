@@ -27,12 +27,13 @@ interface MissionControlProps {
 }
 
 export const MissionControl: React.FC<MissionControlProps> = ({ onOpenCopilot }) => {
-  const { currentClub, currentEvent, healthScore, refreshEvent } = useEvent();
+  const { currentClub, currentEvent, events, healthScore, refreshEvent } = useEvent();
   const navigate = useNavigate();
 
   const [selectedAction, setSelectedAction] = useState<ProposedAction | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [volunteerCount, setVolunteerCount] = useState<number>(0);
+  const [completedTaskIds, setCompletedTaskIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (currentClub?.id) {
@@ -44,354 +45,456 @@ export const MissionControl: React.FC<MissionControlProps> = ({ onOpenCopilot })
     }
   }, [currentClub?.id]);
 
-  // Derive metrics from currentEvent
+  // Tasks & Meetings from currentEvent
   const tasks = currentEvent?.tasks || [];
-  const completedTasks = tasks.filter(t => t.status === 'DONE');
-  const blockedTasks = tasks.filter(t => t.status === 'BLOCKED');
-  const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS');
-
+  const meetings = currentEvent?.meetings || [];
   const risks = currentEvent?.risks || [];
-  const criticalRisks = risks.filter(r => r.severity === 'CRITICAL');
 
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return { text: 'text-emerald-400', ring: '#10B981', label: 'OPTIMAL' };
-    if (score >= 60) return { text: 'text-amber-400', ring: '#F59E0B', label: 'DEGRADED' };
-    return { text: 'text-rose-400', ring: '#F43F5E', label: 'CRITICAL HAZARD' };
+  const handleToggleTaskCheck = async (taskId: string, currentStatus: string) => {
+    const isDone = currentStatus === 'DONE' || completedTaskIds[taskId];
+    const newStatus = isDone ? 'TODO' : 'DONE';
+    setCompletedTaskIds(prev => ({ ...prev, [taskId]: !isDone }));
+    try {
+      await api.updateTask(taskId, { status: newStatus });
+      refreshEvent();
+    } catch {
+      // Revert on error
+      setCompletedTaskIds(prev => ({ ...prev, [taskId]: isDone }));
+    }
   };
 
-  const healthStyle = getHealthColor(healthScore);
-
-  const handleActionClick = (action: ProposedAction) => {
-    setSelectedAction(action);
-    setConfirmOpen(true);
+  // Days left calculation
+  const getDaysLeft = (dateStr?: string | Date) => {
+    if (!dateStr) return 'Upcoming';
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    const diffDays = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'Today';
+    return `${diffDays} days left`;
   };
+
+  // Recent Templates data (from MeetCraft reference)
+  const templates = [
+    { title: 'Event Budget Tracker', tag: 'Finance', desc: 'Track and manage expenses across key operational categories.' },
+    { title: 'Guest Seating Plan', tag: 'Guest Management', desc: 'Plan guest and VIP seating with drag & drop layout zones.' },
+    { title: 'Vendor Onboarding Checklist', tag: 'Vendors', desc: 'Step-by-step tasks to onboard caterers, AV and decor vendors.' },
+    { title: 'Volunteer Roster & RSVP', tag: 'Volunteers', desc: 'Real-time attendance check, meal choices & shift tracking.' },
+  ];
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Welcome & Health Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-primary-950/40 via-background-card to-background-subtle border border-border/80 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2.5">
-            <span className="live-pulse" />
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Live Event Command Center
-            </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-300 font-mono">
-              {currentEvent?.name?.toUpperCase() || 'NO ACTIVE EVENT'}
-            </span>
-
-          </div>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-            Event Mission Control
-          </h1>
-          <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-            {currentEvent?.currentMilestone || 'Active Sprint: Venue Clearances & Registration Surge'} • Next key milestone in 48 hours.
-          </p>
-        </div>
-
-        {/* Health Score Gauge */}
-        <div className="flex items-center space-x-5 bg-background-subtle/80 p-4 rounded-2xl border border-border">
-          <div className="relative w-20 h-20 flex items-center justify-center">
-            {/* SVG Circular Progress */}
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="40"
-                cy="40"
-                r="32"
-                stroke="currentColor"
-                strokeWidth="6"
-                className="text-border"
-                fill="transparent"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="32"
-                stroke={healthStyle.ring}
-                strokeWidth="6"
-                strokeDasharray={200}
-                strokeDashoffset={200 - (200 * healthScore) / 100}
-                strokeLinecap="round"
-                fill="transparent"
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-xl font-extrabold ${healthStyle.text}`}>
-                {healthScore}
-              </span>
-              <span className="text-[9px] text-slate-500 font-bold">/100</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Health Status
-            </div>
-            <div className={`text-sm font-bold mt-0.5 ${healthStyle.text}`}>
-              {healthStyle.label}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-1">
-              {healthScore >= 80 ? 'All operations on track' : `${blockedTasks.length} blocked • ${criticalRisks.length} critical risks`}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI 4-Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Critical Risks */}
-        <div 
-          onClick={() => navigate('/risks')}
-          className="p-5 rounded-2xl bg-background-card border border-border hover:border-rose-500/40 cursor-pointer transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400">Critical Risks</span>
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-110 transition-transform">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-white">{criticalRisks.length} Active</div>
-          <div className="text-xs text-rose-400 mt-1 flex items-center space-x-1">
-            <span>{criticalRisks.length > 0 ? 'Requires lead escalation' : 'No critical risks'}</span>
-            <ChevronRight className="w-3 h-3" />
-          </div>
-        </div>
-
-        {/* Task Progress */}
-        <div 
-          onClick={() => navigate('/tasks')}
-          className="p-5 rounded-2xl bg-background-card border border-border hover:border-emerald-500/40 cursor-pointer transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400">Task Velocity</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-              <CheckSquare className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-white">
-            {completedTasks.length} / {tasks.length} Done
-          </div>
-          <div className="text-xs text-emerald-400 mt-1 flex items-center space-x-1">
-            <span>{tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0}% overall completion</span>
-          </div>
-        </div>
-
-        {/* Blocked Milestones */}
-        <div 
-          onClick={() => navigate('/digital-twin')}
-          className="p-5 rounded-2xl bg-background-card border border-border hover:border-amber-500/40 cursor-pointer transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400">Critical Path Blockers</span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-white">{blockedTasks.length} Tasks Blocked</div>
-          <div className="text-xs text-amber-400 mt-1 flex items-center space-x-1">
-            <span>{blockedTasks.length > 0 ? (blockedTasks[0].title || 'Dependency bottlenecks') : 'No critical path blockers'}</span>
-          </div>
-        </div>
-
-        {/* Volunteers */}
-        <div 
-          onClick={() => navigate('/volunteers')}
-          className="p-5 rounded-2xl bg-background-card border border-border hover:border-violet-500/40 cursor-pointer transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400">Volunteer Operations</span>
-            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 group-hover:scale-110 transition-transform">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-white">
-            {volunteerCount} {volunteerCount === 1 ? 'Volunteer' : 'Volunteers'}
-          </div>
-          <div className="text-xs text-violet-400 mt-1 flex items-center space-x-1">
-            <span>{volunteerCount > 0 ? 'Smart matching active' : 'No volunteers registered'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Center Grid: Digital Twin Preview (Left 7 cols) & AI Recommendations (Right 5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Event Digital Twin Card Preview */}
-        <div className="lg:col-span-7 bg-background-card border border-border rounded-3xl p-6 flex flex-col justify-between">
+      {/* ─────────────────────────────────────────────────────────────
+          ROW 1: Today's Tasks | Today's Meetings | Projects Worked (Donut)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* 1. Today's Tasks */}
+        <div className="lg:col-span-4 meet-card p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                  <Network className="w-4 h-4 text-primary-400" />
-                  <span>Live Event Digital Twin Preview</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Interactive topological dependency mapping of operational deliverables.
-                </p>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-sm font-bold text-[#191E35]">Today's Tasks</h2>
+                <span className="w-5 h-5 rounded-full bg-[#EDE9FE] text-primary-600 text-[11px] font-bold flex items-center justify-center">
+                  {tasks.length}
+                </span>
               </div>
-              <button
-                onClick={() => navigate('/digital-twin')}
-                className="px-3 py-1.5 rounded-xl bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 border border-primary-500/30 text-xs font-semibold transition-colors flex items-center space-x-1"
+              <button 
+                onClick={() => navigate('/tasks')}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700"
               >
-                <span>Full Graph</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                See All
               </button>
             </div>
 
-            {/* Interactive Preview Canvas with Node Blocks */}
-            <div className="p-4 rounded-2xl bg-background-subtle border border-border/80 space-y-3">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pb-2 border-b border-border/60">
-                <span>Critical Path Flow</span>
-                <span className="text-rose-400 font-bold">• 1 Severe Bottleneck Detected</span>
-              </div>
+            <div className="space-y-3.5">
+              {tasks.slice(0, 3).map((t) => {
+                const isChecked = t.status === 'DONE' || completedTaskIds[t.id];
+                return (
+                  <div key={t.id} className="flex items-start space-x-3 group">
+                    <button
+                      onClick={() => handleToggleTaskCheck(t.id, t.status)}
+                      className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                        isChecked 
+                          ? 'bg-primary-600 border-primary-600 text-white' 
+                          : 'border-[#CBD2E2] hover:border-primary-500'
+                      }`}
+                    >
+                      {isChecked && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-semibold leading-snug truncate ${isChecked ? 'line-through text-[#9BA2BA]' : 'text-[#191E35]'}`}>
+                        {t.title}
+                      </p>
+                      <p className="text-[11px] font-medium text-primary-600 truncate mt-0.5">
+                        {currentEvent?.name || 'Main Event'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40">
-                  <div className="text-[10px] font-mono text-rose-300 font-bold">PREREQUISITE #1</div>
-                  <div className="text-xs font-bold text-white mt-0.5 truncate">Auditorium Clearances</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Status: IN_PROGRESS (Overdue)</div>
+              {tasks.length === 0 && (
+                <div className="py-8 text-center text-xs text-[#8C93AE]">
+                  No tasks scheduled for today.
                 </div>
-
-                <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                  <div className="text-[10px] font-mono text-amber-300 font-bold">DEPENDENT #2</div>
-                  <div className="text-xs font-bold text-white mt-0.5 truncate">Stage Truss Rigging</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Status: BLOCKED by Permit</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-background-card border border-border">
-                  <div className="text-[10px] font-mono text-cyan-300 font-bold">DOWNSTREAM #3</div>
-                  <div className="text-xs font-bold text-white mt-0.5 truncate">Main Stage Soundcheck</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Status: WAITING</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs">
-            <span className="text-slate-400">Total Graph Nodes: <strong>{tasks.length} tasks, 6 teams</strong></span>
+          <div className="pt-4 mt-4 border-t border-[#F0F2F9]">
             <button
-              onClick={() => navigate('/simulator')}
-              className="text-primary-400 hover:text-primary-300 font-semibold flex items-center space-x-1"
+              onClick={() => navigate('/tasks')}
+              className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center space-x-1"
             >
-              <span>Simulate delays in What-If sandbox</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>+ Add Task</span>
             </button>
           </div>
         </div>
 
-        {/* Right: Autonomous AI Recommendations Card */}
-        <div className="lg:col-span-5 bg-background-card border border-border rounded-3xl p-6 flex flex-col justify-between">
+        {/* 2. Today's Meetings */}
+        <div className="lg:col-span-4 meet-card p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className="w-7 h-7 rounded-lg bg-primary-500/20 border border-primary-500/40 flex items-center justify-center text-primary-400">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-white">AI Recommendations</h3>
+                <h2 className="text-sm font-bold text-[#191E35]">Today's Meetings</h2>
+                <span className="w-5 h-5 rounded-full bg-[#EDE9FE] text-primary-600 text-[11px] font-bold flex items-center justify-center">
+                  {meetings.length || 2}
+                </span>
               </div>
-              <button
-                onClick={onOpenCopilot}
-                className="text-xs text-primary-400 hover:text-primary-300 font-semibold"
+              <button 
+                onClick={() => navigate('/meetings')}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700"
               >
-                Open Chatbot
+                See All
               </button>
             </div>
 
-            <div className="space-y-3">
-              {/* Recommendation 1 */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/20 to-background-subtle border border-rose-500/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">
-                    HIGH PRIORITY
-                  </span>
-                  <span className="text-[10px] text-slate-400">Logistics Bottleneck</span>
+            <div className="space-y-4">
+              {/* Meeting Item 1 */}
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <Calendar className="w-4 h-4" />
                 </div>
-                <div className="text-xs font-bold text-white">
-                  Notify owners of 4 overdue venue milestones
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-[#191E35] truncate">
+                    {meetings[0]?.title || 'Seating & Venue Coordination Sync'}
+                  </p>
+                  <p className="text-[11px] text-[#7A829D] mt-0.5">10:00 AM – 10:30 AM</p>
+                  <p className="text-[11px] text-[#9AA1B9] truncate">Venue Coordinator – Sophia Reynolds</p>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Clearance delays threaten auditorium staging. Send automated escalation notice to Core Committee.
-                </p>
-                <button
-                  onClick={() => handleActionClick({
-                    id: 'rec-1',
-                    type: 'NOTIFY_TEAM',
-                    title: 'Send Overdue Milestones Notice',
-                    description: 'Dispatch urgent WhatsApp & Email notifications to responsible logistics coordinators.',
-                    buttonLabel: 'Notify Owners',
-                    payload: { eventId: currentEvent?.id, count: 4 },
-                  })}
-                  className="w-full py-2 rounded-xl bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 border border-primary-500/30 text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5"
-                >
-                  <span>Review & Notify Owners</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
               </div>
 
-              {/* Recommendation 2 */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/20 to-background-subtle border border-violet-500/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-mono">
-                    WORKLOAD REBALANCE
+              {/* Meeting Item 2 */}
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-[#191E35] truncate">
+                    {meetings[1]?.title || 'Volunteer Briefing & Walkthrough'}
+                  </p>
+                  <p className="text-[11px] text-[#7A829D] mt-0.5">11:15 AM – 12:00 PM</p>
+                  <p className="text-[11px] text-[#9AA1B9] truncate">Lead Organizer – ClubOps Core</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-[#F0F2F9]">
+            <button
+              onClick={() => navigate('/meetings')}
+              className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+            >
+              <span>+ Schedule Meeting</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3. Projects Worked (MeetCraft Donut Chart Card) */}
+        <div className="lg:col-span-4 meet-card p-6 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-[#191E35]">Projects Worked</h2>
+            <button 
+              onClick={() => navigate('/tasks')}
+              className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+            >
+              See All
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between py-3">
+            {/* SVG Donut Chart */}
+            <div className="relative w-28 h-28 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="56" cy="56" r="42" stroke="#EDE9FE" strokeWidth="10" fill="transparent" />
+                <circle
+                  cx="56" cy="56" r="42"
+                  stroke="#4F46E5" strokeWidth="10"
+                  strokeDasharray="264"
+                  strokeDashoffset="65"
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+                <circle
+                  cx="56" cy="56" r="42"
+                  stroke="#06B6D4" strokeWidth="10"
+                  strokeDasharray="264"
+                  strokeDashoffset="180"
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+                <circle
+                  cx="56" cy="56" r="42"
+                  stroke="#F59E0B" strokeWidth="10"
+                  strokeDasharray="264"
+                  strokeDashoffset="220"
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-xl font-extrabold text-[#191E35]">{events.length || 4}</span>
+                <span className="text-[10px] text-[#7A829D] font-medium">events</span>
+              </div>
+            </div>
+
+            {/* Legend List */}
+            <div className="space-y-1.5 text-[11px] text-[#48506E] pr-2">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-primary-600" />
+                <span className="truncate max-w-[110px] font-medium">{events[0]?.name || "Annual Tech Fest"}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                <span className="truncate max-w-[110px] font-medium">{events[1]?.name || "Cultural Night"}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="truncate max-w-[110px] font-medium">{events[2]?.name || "Hackathon Sprint"}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-slate-300" />
+                <span className="truncate max-w-[110px] font-medium">{events[3]?.name || "Alumni Mixer"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-[#F0F2F9] text-[11px] text-[#7A829D] flex items-center justify-between">
+            <span>Overall Operations Velocity</span>
+            <span className="font-bold text-emerald-600">{healthScore}% on track</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          ROW 2: Upcoming Events (Carousel) | Alerts (Status list)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* 1. Upcoming Events Card (Left 8 cols) */}
+        <div className="lg:col-span-8 meet-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-[#191E35]">Upcoming Events</h2>
+            <button 
+              onClick={() => navigate('/tasks')}
+              className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+            >
+              See All
+            </button>
+          </div>
+
+          {/* Horizontal Event Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Card 1 */}
+            <div className="p-4 rounded-2xl bg-[#F8F9FE] border border-[#E9EDF7] flex flex-col justify-between hover:bg-white hover:shadow-sm transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  {/* Avatar stack */}
+                  <div className="flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">S</div>
+                    <div className="w-6 h-6 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">A</div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[#7A829D] border border-[#E5E9F2]">
+                    {getDaysLeft(events[0]?.date)}
                   </span>
-                  <span className="text-[10px] text-slate-400">Hospitality Desk</span>
                 </div>
-                <div className="text-xs font-bold text-white">
-                  Reallocate 3 volunteers to registration
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Morning rush model predicts 28 min queue wait. 3 media volunteers currently have LOW workload.
+                <p className="text-xs font-bold text-[#191E35] truncate">
+                  {events[0]?.name || "Annual Tech Fest 2026"}
                 </p>
-                <button
-                  onClick={() => handleActionClick({
-                    id: 'rec-2',
-                    type: 'REALLOCATE_VOLUNTEERS',
-                    title: 'Reallocate 3 Volunteers to Check-in',
-                    description: 'Shift 3 volunteers from Marketing to Hospitality check-in desk for 8 AM peak.',
-                    buttonLabel: 'Reassign Volunteers',
-                    payload: { eventId: currentEvent?.id, targetTeam: 'Hospitality', count: 3 },
-                  })}
-                  className="w-full py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5"
-                >
-                  <span>Approve Volunteer Reallocation</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[#EAEFF7]">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="text-[#7A829D]">Progress</span>
+                  <span className="font-bold text-[#191E35]">83%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#E2E8F4] rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-600 rounded-full" style={{ width: '83%' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="p-4 rounded-2xl bg-[#F8F9FE] border border-[#E9EDF7] flex flex-col justify-between hover:bg-white hover:shadow-sm transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-cyan-500 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">M</div>
+                    <div className="w-6 h-6 rounded-full bg-rose-400 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">K</div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[#7A829D] border border-[#E5E9F2]">
+                    {getDaysLeft(events[1]?.date || new Date(Date.now() + 12 * 86400000))}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#191E35] truncate">
+                  {events[1]?.name || "Annual Cultural Gala"}
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[#EAEFF7]">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="text-[#7A829D]">Progress</span>
+                  <span className="font-bold text-[#191E35]">67%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#E2E8F4] rounded-full overflow-hidden">
+                  <div className="h-full bg-cyan-500 rounded-full" style={{ width: '67%' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="p-4 rounded-2xl bg-[#F8F9FE] border border-[#E9EDF7] flex flex-col justify-between hover:bg-white hover:shadow-sm transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">D</div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[#7A829D] border border-[#E5E9F2]">
+                    {getDaysLeft(events[2]?.date || new Date(Date.now() + 18 * 86400000))}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#191E35] truncate">
+                  {events[2]?.name || "Hackathon Grand Finale"}
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[#EAEFF7]">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="text-[#7A829D]">Progress</span>
+                  <span className="font-bold text-[#191E35]">48%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#E2E8F4] rounded-full overflow-hidden">
+                  <div className="h-full bg-rose-400 rounded-full" style={{ width: '48%' }} />
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* 2. Alerts Card (Right 4 cols) */}
+        <div className="lg:col-span-4 meet-card p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-[#191E35]">Alerts</h2>
+              <button 
+                onClick={() => navigate('/risks')}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+              >
+                See All
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {/* Alert 1 */}
+              <div className="flex items-start space-x-2.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-semibold text-[#191E35]">Seating plan needs approval</span>{' '}
+                  <span className="text-primary-600 font-medium">for {currentEvent?.name || 'Main Event'}</span>
+                </div>
+              </div>
+
+              {/* Alert 2 */}
+              <div className="flex items-start space-x-2.5">
+                <span className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-semibold text-[#191E35]">Sponsorship disbursement pending</span>{' '}
+                  <span className="text-primary-600 font-medium">Title Sponsor contract</span>
+                </div>
+              </div>
+
+              {/* Alert 3 */}
+              <div className="flex items-start space-x-2.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-semibold text-[#191E35]">AV contractor not confirmed</span>{' '}
+                  <span className="text-primary-600 font-medium">Soundcheck stage</span>
+                </div>
+              </div>
+
+              {/* Alert 4 */}
+              <div className="flex items-start space-x-2.5">
+                <span className="w-2 h-2 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-semibold text-[#191E35]">Volunteer shift reply pending</span>{' '}
+                  <span className="text-primary-600 font-medium">Morning entry desk</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#F0F2F9] text-[11px] text-[#7A829D] flex items-center justify-between">
+            <span>Risk Radar</span>
+            <span className="font-bold text-amber-600">{risks.length} logged</span>
+          </div>
+        </div>
+
       </div>
 
-      {/* Bottom Activity & Quick Actions */}
-      <div className="bg-background-card border border-border rounded-3xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-white flex items-center space-x-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <span>Upcoming Critical Checkpoints</span>
-          </h3>
-          <button
-            onClick={() => navigate('/tasks')}
-            className="text-xs text-primary-400 hover:underline font-semibold"
+      {/* ─────────────────────────────────────────────────────────────
+          ROW 3: Recent Templates (4 Columns as seen in MeetCraft)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-[#191E35]">Recent Templates</h2>
+          <button 
+            onClick={() => navigate('/brain')}
+            className="text-xs font-semibold text-primary-600 hover:text-primary-700"
           >
-            View All Tasks
+            See All
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {tasks.slice(0, 3).map((t) => (
-            <div key={t.id} className="p-4 rounded-2xl bg-background-subtle border border-border space-y-2">
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
-                  t.priority === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300' : 'bg-primary-500/20 text-primary-300'
-                }`}>
-                  {t.priority}
-                </span>
-                <span className="text-[10px] text-slate-400 flex items-center space-x-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>{new Date(t.deadline).toLocaleDateString()}</span>
-                </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {templates.map((tpl, i) => (
+            <div 
+              key={i} 
+              onClick={() => navigate('/tasks')}
+              className="meet-card p-5 cursor-pointer hover:-translate-y-0.5 transition-all group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#F5F6FC] text-[#7A829D] border border-[#EAEFF7]">
+                    {tpl.tag}
+                  </span>
+                  <div className="w-6 h-6 rounded-lg bg-[#F5F6FC] group-hover:bg-primary-50 text-[#7A829D] group-hover:text-primary-600 flex items-center justify-center transition-colors">
+                    <ArrowRight className="w-3.5 h-3.5 transform -rotate-45" />
+                  </div>
+                </div>
+
+                <h3 className="text-xs font-bold text-[#191E35] mb-1">
+                  {tpl.title}
+                </h3>
+                <p className="text-[11px] text-[#7A829D] leading-relaxed line-clamp-2">
+                  {tpl.desc}
+                </p>
               </div>
-              <div className="text-xs font-bold text-white truncate">{t.title}</div>
-              <div className="text-[11px] text-slate-400 truncate">{t.team?.name || 'General Operations'}</div>
+
+              <div className="mt-4 pt-3 border-t border-[#F0F2F9] flex items-center justify-between text-[10px] text-[#8C93AE]">
+                <span>1-Click Apply</span>
+                <span className="font-semibold text-primary-600 group-hover:underline">Use Template &rarr;</span>
+              </div>
             </div>
           ))}
         </div>

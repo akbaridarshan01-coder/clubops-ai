@@ -35,11 +35,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCopilot }) => {
   ];
 
   return (
-    <aside className="w-64 border-r border-border bg-background-card/50 backdrop-blur-md hidden md:flex flex-col justify-between py-4 px-3 flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16">
+    <aside className="w-64 border-r border-[#EAEFF7] bg-white hidden md:flex flex-col justify-between py-6 px-4 flex-shrink-0 min-h-[calc(100vh-5rem)]">
       {/* Navigation list */}
-      <div className="space-y-1">
-        <div className="px-3 pb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-          Event Operations
+      <div className="space-y-1.5">
+        <div className="px-3 pb-2 text-[10px] font-bold text-[#8C93AE] uppercase tracking-wider">
+          Operations
         </div>
         {navLinks.map((item) => {
           const Icon = item.icon;
@@ -48,10 +48,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCopilot }) => {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all group ${
+                `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                   isActive
-                    ? 'bg-primary-600/15 text-primary-300 border border-primary-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-background-hover'
+                    ? 'bg-[#EDE9FE] text-primary-600 shadow-2xs font-bold'
+                    : 'text-[#626A87] hover:text-[#191E35] hover:bg-[#F5F6FC]'
                 }`
               }
             >
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCopilot }) => {
                 <span>{item.label}</span>
               </div>
               {item.badge && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold border ${item.badgeColor || 'bg-primary-500/20 text-primary-400 border-primary-500/30'}`}>
+                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold border ${item.badgeColor || 'bg-primary-100 text-primary-700 border-primary-200'}`}>
                   {item.badge}
                 </span>
               )}
@@ -69,26 +69,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCopilot }) => {
         })}
       </div>
 
-      {/* Floating AI Chatbot Trigger Card at bottom of Sidebar */}
-      <div className="pt-4 border-t border-border">
-        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-primary-900/30 via-background-card to-accent-violet/10 border border-primary-500/20 relative overflow-hidden">
-          <div className="flex items-center space-x-2.5 mb-2">
-            <div className="w-7 h-7 rounded-lg bg-primary-500/20 border border-primary-500/40 flex items-center justify-center text-primary-400">
-              <Bot className="w-4 h-4 animate-pulse" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-white">AI Chatbot</div>
-              <div className="text-[10px] text-primary-300">Ready to assist & act</div>
-            </div>
+      {/* Bottom Section (Upgrade/AI Card + Settings & Support like MeetCraft) */}
+      <div className="pt-4 space-y-4">
+        {/* Floating AI Chatbot Card styled like 'Upgrade to Pro' */}
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#EEF0FD] via-[#F3E8FF] to-[#EBE4FF] border border-[#DDD6FE] relative overflow-hidden shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-white shadow-2xs flex items-center justify-center text-primary-600 mb-2.5">
+            <Bot className="w-4 h-4 animate-pulse" />
           </div>
-          <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
-            Ask anything about the website, detect bottlenecks, or get live event insights.
+          <div className="text-xs font-bold text-[#191E35]">AI Assistant Pro</div>
+          <p className="text-[11px] text-[#626A87] mt-0.5 mb-3 leading-relaxed">
+            Instant event triage, bot recommendations & live analytics.
           </p>
           <button
             onClick={onOpenCopilot}
-            className="w-full py-2 px-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold shadow-glow transition-all flex items-center justify-center space-x-1.5"
+            className="w-full py-2 px-3 rounded-xl bg-white hover:bg-primary-600 text-primary-700 hover:text-white border border-[#DDD6FE] hover:border-transparent text-xs font-bold shadow-2xs transition-all flex items-center justify-center space-x-1"
           >
-            <span>Ask AI Chatbot</span>
+            <span>Ask AI Assistant</span>
+          </button>
+        </div>
+
+        {/* Settings & Support footer links */}
+        <div className="pt-2 border-t border-[#F0F2F9] space-y-1">
+          <NavLink
+            to="/brain"
+            className="flex items-center space-x-3 px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#7A829D] hover:text-[#191E35] hover:bg-[#F5F6FC] transition-colors"
+          >
+            <Brain className="w-3.5 h-3.5" />
+            <span>Settings & Brain</span>
+          </NavLink>
+          <button
+            onClick={onOpenCopilot}
+            className="w-full flex items-center space-x-3 px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#7A829D] hover:text-[#191E35] hover:bg-[#F5F6FC] transition-colors text-left"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Support & Help</span>
           </button>
         </div>
       </div>

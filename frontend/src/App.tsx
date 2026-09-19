@@ -33,19 +33,22 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(2);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar
-        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        onOpenNotifications={() => setNotificationOpen(true)}
-        unreadCount={unreadCount}
-      />
-      <div className="flex-1 flex">
-        <Sidebar onOpenCopilot={() => setCopilotOpen(true)} />
-        <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full overflow-x-hidden">
-          {children}
-        </main>
+    <div className="min-h-screen p-2 md:p-6 lg:p-8 flex justify-center items-start">
+      {/* Framed MeetCraft App Shell */}
+      <div className="w-full max-w-[1520px] meet-window flex flex-col overflow-hidden min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)]">
+        <Navbar
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          onOpenNotifications={() => setNotificationOpen(true)}
+          unreadCount={unreadCount}
+        />
+        <div className="flex-1 flex overflow-hidden">
+          <Sidebar onOpenCopilot={() => setCopilotOpen(true)} />
+          <main className="flex-1 px-4 md:px-7 py-6 overflow-y-auto overflow-x-hidden bg-[#F4F5FB]">
+            {children}
+          </main>
+        </div>
+        <BottomNav onOpenCopilot={() => setCopilotOpen(true)} />
       </div>
-      <BottomNav onOpenCopilot={() => setCopilotOpen(true)} />
 
       {/* Overlays */}
       <CommandPalette

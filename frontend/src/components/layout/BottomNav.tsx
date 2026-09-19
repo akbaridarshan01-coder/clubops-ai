@@ -8,12 +8,12 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ onOpenCopilot }) => {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background-card/95 backdrop-blur-xl border-t border-border flex items-center justify-around px-2 z-50">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-xl border-t border-[#EAEFF7] flex items-center justify-around px-2 z-50 shadow-lg">
       <NavLink
         to="/mission-control"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center space-y-1 w-14 py-1 rounded-lg ${
-            isActive ? 'text-primary-400' : 'text-slate-400'
+            isActive ? 'text-primary-600 font-bold' : 'text-[#7A829D]'
           }`
         }
       >
@@ -25,7 +25,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenCopilot }) => {
         to="/digital-twin"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center space-y-1 w-14 py-1 rounded-lg ${
-            isActive ? 'text-primary-400' : 'text-slate-400'
+            isActive ? 'text-primary-600 font-bold' : 'text-[#7A829D]'
           }`
         }
       >
@@ -36,7 +36,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenCopilot }) => {
       {/* Center AI Copilot Action Button */}
       <button
         onClick={onOpenCopilot}
-        className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-primary-600 to-accent-cyan shadow-glow flex items-center justify-center text-white border-2 border-background"
+        className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-primary-600 to-accent-violet shadow-glow flex items-center justify-center text-white border-2 border-white"
       >
         <Bot className="w-6 h-6" />
       </button>
@@ -45,7 +45,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenCopilot }) => {
         to="/tasks"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center space-y-1 w-14 py-1 rounded-lg ${
-            isActive ? 'text-primary-400' : 'text-slate-400'
+            isActive ? 'text-primary-600 font-bold' : 'text-[#7A829D]'
           }`
         }
       >
@@ -57,7 +57,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenCopilot }) => {
         to="/war-room"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center space-y-1 w-14 py-1 rounded-lg ${
-            isActive ? 'text-rose-400' : 'text-slate-400'
+            isActive ? 'text-rose-500 font-bold' : 'text-[#7A829D]'
           }`
         }
       >

@@ -38,44 +38,44 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="h-16 border-b border-border bg-background-card/80 backdrop-blur-md sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
-      {/* Brand & Event Selector */}
+    <header className="h-20 border-b border-[#EAEFF7] bg-white px-6 md:px-8 flex items-center justify-between">
+      {/* Left: Brand Logo & Event Switcher */}
       <div className="flex items-center space-x-6">
         <div 
           onClick={() => navigate('/mission-control')}
-          className="flex items-center space-x-2.5 cursor-pointer group"
+          className="flex items-center space-x-3 cursor-pointer group"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 via-primary-500 to-accent-cyan p-0.5 shadow-glow flex items-center justify-center">
-            <div className="w-full h-full bg-background rounded-[10px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-accent-cyan group-hover:rotate-12 transition-transform duration-300" />
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary-600 via-indigo-500 to-accent-violet p-0.5 shadow-sm flex items-center justify-center">
+            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary-600 group-hover:rotate-12 transition-transform duration-300" />
             </div>
           </div>
-          <div className="hidden sm:block">
+          <div>
             <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-base tracking-tight text-white">CLUBOPS</span>
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-400 border border-primary-500/30">AI</span>
+              <span className="font-extrabold text-lg tracking-tight text-[#191E35]">ClubOps</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-50 text-primary-600 border border-primary-100">AI</span>
             </div>
           </div>
         </div>
 
-        {/* Active Event Selector */}
+        {/* Active Event Dropdown */}
         {currentEvent && (
-          <div className="relative">
+          <div className="relative hidden lg:block">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background-subtle border border-border hover:border-border-highlight text-sm text-slate-200 transition-colors"
+              className="flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#F5F6FC] border border-[#E4E8F2] hover:bg-[#EEF1F9] text-xs font-semibold text-[#323955] transition-colors"
             >
-              <Layers className="w-4 h-4 text-primary-400" />
-              <span className="font-medium max-w-[150px] truncate">{currentEvent.name}</span>
-              <span className="text-xs px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+              <Layers className="w-3.5 h-3.5 text-primary-600" />
+              <span className="max-w-[150px] truncate">{currentEvent.name}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold">
                 {currentEvent.status}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-[#7A829D]" />
             </button>
 
             {dropdownOpen && (
-              <div className="absolute left-0 mt-2 w-64 rounded-xl bg-background-card border border-border shadow-glass p-2 z-50 animate-scale-in">
-                <div className="text-xs font-semibold text-slate-400 px-2.5 py-1 uppercase tracking-wider">
+              <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-white border border-[#EAEFF7] shadow-xl p-2 z-50 animate-scale-in">
+                <div className="text-[10px] font-bold text-[#7A829D] px-2.5 py-1.5 uppercase tracking-wider">
                   Switch Event
                 </div>
                 {events.map((ev) => (
@@ -85,14 +85,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setCurrentEvent(ev);
                       setDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between ${
                       ev.id === currentEvent.id
-                        ? 'bg-primary-600/20 text-primary-300 font-medium'
-                        : 'text-slate-300 hover:bg-background-hover'
+                        ? 'bg-primary-50 text-primary-700 font-semibold'
+                        : 'text-[#48506E] hover:bg-[#F5F6FC]'
                     }`}
                   >
                     <span className="truncate">{ev.name}</span>
-                    <span className="text-xs text-slate-400">{ev.type}</span>
+                    <span className="text-[10px] text-[#8C93AE]">{ev.type}</span>
                   </button>
                 ))}
               </div>
@@ -101,86 +101,90 @@ export const Navbar: React.FC<NavbarProps> = ({
         )}
       </div>
 
-      {/* Center Search / Command Palette shortcut */}
-      <div className="hidden md:flex items-center">
-        <button
+      {/* Center: Search Pill (MeetCraft Style) */}
+      <div className="flex-1 max-w-md mx-6 hidden md:block">
+        <div 
           onClick={onOpenCommandPalette}
-          className="flex items-center space-x-3 px-4 py-1.5 rounded-xl bg-background-subtle border border-border hover:border-primary-500/50 text-slate-400 hover:text-slate-200 transition-all text-xs w-64 justify-between group"
+          className="flex items-center space-x-3 px-4 py-2.5 rounded-full bg-[#F5F6FC] border border-[#E4E8F2] hover:border-primary-300 text-[#7A829D] hover:text-[#323955] transition-all cursor-pointer group"
         >
-          <div className="flex items-center space-x-2">
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-400 transition-colors" />
-            <span>Search tasks, risks, volunteers...</span>
-          </div>
-          <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-border rounded text-slate-400 border border-slate-700">
+          <Search className="w-4 h-4 text-[#8C93AE] group-hover:text-primary-600 transition-colors" />
+          <span className="text-xs font-medium flex-1">Search tasks, meetings, volunteers...</span>
+          <kbd className="px-2 py-0.5 text-[10px] font-mono bg-white rounded-md text-[#7A829D] border border-[#D5DAE8] shadow-2xs">
             Ctrl K
           </kbd>
-        </button>
+        </div>
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center space-x-3">
-        {/* Event Health Score Indicator */}
+      {/* Right: + New Event, Notification Bell, User Profile (MeetCraft Style) */}
+      <div className="flex items-center space-x-4">
+        {/* + New Event Button (MeetCraft Style) */}
+        <button
+          onClick={() => navigate('/auth?mode=onboarding')}
+          className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+        >
+          <span className="text-sm leading-none">+</span>
+          <span>New Event</span>
+        </button>
+
+        {/* Health Score Pill */}
         <div 
           onClick={() => navigate('/mission-control')}
-          className={`cursor-pointer flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium transition-all ${getHealthColor(healthScore)}`}
-          title="Overall Event Health Score based on critical bottlenecks, overdue tasks, and volunteer allocation."
+          className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#F5F6FC] border border-[#E4E8F2] text-xs font-semibold cursor-pointer hover:bg-[#EEF1F9] transition-colors"
+          title="Overall Event Health Score"
         >
-          <Activity className="w-3.5 h-3.5 animate-pulse" />
-          <span>Health: {healthScore}/100</span>
+          <Activity className="w-3.5 h-3.5 text-primary-600" />
+          <span className="text-[#323955]">Health:</span>
+          <span className="text-primary-700 font-bold">{healthScore}</span>
         </div>
-
-        {/* War Room Shortcut */}
-        <button
-          onClick={() => navigate('/war-room')}
-          className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold transition-colors"
-        >
-          <ShieldAlert className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
-          <span>WAR ROOM</span>
-        </button>
 
         {/* Notification Bell */}
         <button
           onClick={onOpenNotifications}
-          className="relative p-2 rounded-xl bg-background-subtle border border-border hover:border-border-highlight text-slate-300 hover:text-white transition-colors"
+          className="relative p-2.5 rounded-full bg-[#F5F6FC] hover:bg-[#EEF1F9] text-[#48506E] transition-colors border border-[#E4E8F2]"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
-              {unreadCount}
-            </span>
+            <span className="absolute 1 top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500" />
           )}
         </button>
 
-        {/* User Menu */}
-        <div className="relative">
+        {/* User Profile Info (Avatar + Name + Role as seen in MeetCraft) */}
+        <div className="relative pl-2 border-l border-[#EAEFF7]">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-background-subtle transition-colors"
+            className="flex items-center space-x-3 p-1 rounded-xl hover:bg-[#F5F6FC] transition-colors text-left"
           >
-            <div className="w-8 h-8 rounded-full bg-primary-600/30 border border-primary-500/40 flex items-center justify-center text-primary-300 font-bold text-xs">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 via-rose-400 to-indigo-500 p-0.5 shadow-sm">
+              <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-primary-700 font-bold text-xs">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+            <div className="hidden sm:block leading-tight">
+              <div className="text-xs font-bold text-[#191E35] truncate max-w-[110px]">
+                {user?.name || 'Organizer'}
+              </div>
+              <div className="text-[10px] text-[#7A829D] font-medium truncate">
+                {user?.role === 'OWNER' ? 'Lead Manager' : (user?.role || 'Event Manager')}
+              </div>
+            </div>
+            <ChevronDown className="w-3 h-3 text-[#7A829D] hidden sm:block" />
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-background-card border border-border shadow-glass p-2 z-50 animate-scale-in">
-              <div className="px-3 py-2 border-b border-border mb-1">
-                <div className="text-sm font-medium text-white truncate">{user?.name}</div>
-                <div className="text-xs text-slate-400 truncate">{user?.email}</div>
-                <span className="inline-block mt-1 text-[10px] px-1.5 py-0.2 rounded bg-primary-500/20 text-primary-300 font-mono">
-                  {user?.role || 'ORGANIZER'}
-                </span>
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-[#EAEFF7] shadow-xl p-2 z-50 animate-scale-in">
+              <div className="px-3 py-2 border-b border-[#F0F2F9] mb-1">
+                <div className="text-xs font-bold text-[#191E35] truncate">{user?.name}</div>
+                <div className="text-[11px] text-[#7A829D] truncate">{user?.email}</div>
               </div>
               <button
                 onClick={() => {
                   navigate('/brain');
                   setUserMenuOpen(false);
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-background-hover transition-colors flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs text-[#323955] hover:bg-[#F5F6FC] transition-colors flex items-center space-x-2"
               >
-                <UserIcon className="w-4 h-4 text-slate-400" />
+                <UserIcon className="w-3.5 h-3.5 text-[#7A829D]" />
                 <span>Club Profile & Brain</span>
               </button>
               <button
@@ -188,9 +192,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   logout();
                   navigate('/auth');
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs text-rose-600 hover:bg-rose-50 transition-colors flex items-center space-x-2"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
               </button>
             </div>

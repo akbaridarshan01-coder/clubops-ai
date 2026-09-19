@@ -105,41 +105,40 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAEFF7]">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="live-pulse" />
-            <h1 className="text-xl font-bold text-white flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-primary-400" />
-              <span>Meeting Intelligence Pipeline</span>
+            <h1 className="text-lg font-bold text-[#191E35] flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-primary-600" />
+              <span>Meeting Intelligence & Notes</span>
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Turn meeting transcripts and unorganized discussion notes into real, assigned operational tasks.
+          <p className="text-xs text-[#7A829D] mt-0.5">
+            Turn meeting transcripts and discussion notes into actionable, assigned tasks.
           </p>
         </div>
 
         <button
           onClick={() => setTranscript(demoTranscript)}
-          className="text-xs font-semibold text-primary-400 hover:text-primary-300 px-3 py-1.5 rounded-xl border border-primary-500/30 bg-primary-600/10 transition-colors"
+          className="text-xs font-semibold text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-xl border border-primary-200 bg-primary-50 transition-colors shadow-2xs"
         >
           Load Sample Meeting Transcript
         </button>
       </div>
 
       {toastMessage && (
-        <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-xs text-emerald-300 flex items-center space-x-2 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center space-x-2 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Transcript Input Box */}
-      <div className="bg-background-card border border-border rounded-3xl p-6 space-y-4">
+      <div className="meet-card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-accent-cyan" />
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 text-primary-600" />
+            <span className="text-xs font-bold text-[#191E35] uppercase tracking-wider">
               Paste or Upload Meeting Notes
             </span>
           </div>
@@ -147,7 +146,7 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
             type="text"
             value={meetingTitle}
             onChange={(e) => setMeetingTitle(e.target.value)}
-            className="bg-background-subtle border border-border px-3 py-1.5 rounded-xl text-xs text-white max-w-sm"
+            className="bg-[#F5F6FC] border border-[#E4E8F2] px-3.5 py-1.5 rounded-xl text-xs text-[#191E35] font-medium max-w-sm focus:outline-none focus:border-primary-500"
             placeholder="Meeting Title"
           />
         </div>
@@ -157,14 +156,14 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
           placeholder="Paste meeting discussion (e.g. 'Rohan: I will submit the auditorium permits tomorrow. Dev: Move 3 volunteers to registration desk...')"
-          className="w-full bg-background-subtle border border-border focus:border-primary-500 rounded-2xl p-4 text-xs text-white placeholder-slate-500 focus:outline-none font-mono"
+          className="w-full bg-[#F5F6FC] border border-[#E4E8F2] focus:border-primary-500 rounded-2xl p-4 text-xs text-[#191E35] placeholder-[#8C93AE] focus:outline-none font-mono leading-relaxed"
         />
 
         <div className="flex items-center justify-end space-x-3">
           <button
             onClick={handleProcessTranscript}
             disabled={processing || !transcript.trim()}
-            className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-glow transition-all flex items-center space-x-2 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs shadow-sm transition-all flex items-center space-x-2 disabled:opacity-50 active:scale-95"
           >
             {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             <span>Process Transcript & Extract Tasks</span>
@@ -174,14 +173,14 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
 
       {/* Extracted Action Items Presentation */}
       {selectedMeeting && (
-        <div className="bg-background-card border border-border rounded-3xl p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+        <div className="meet-card p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAEFF7]">
             <div>
-              <div className="text-[10px] font-mono text-primary-400 font-bold uppercase">
+              <div className="text-[10px] font-bold text-primary-600 uppercase">
                 PROCESSED MEETING LOG
               </div>
-              <h2 className="text-base font-bold text-white mt-0.5">{selectedMeeting.title}</h2>
-              <span className="text-xs text-slate-400">
+              <h2 className="text-base font-bold text-[#191E35] mt-0.5">{selectedMeeting.title}</h2>
+              <span className="text-xs text-[#7A829D]">
                 Extracted {selectedMeeting.actionItems?.length || 0} Action Items
               </span>
             </div>
@@ -189,7 +188,7 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
             <button
               onClick={handleConvertAll}
               disabled={creatingTasks}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-glow transition-all flex items-center space-x-2 disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all flex items-center space-x-2 disabled:opacity-50 active:scale-95"
             >
               {creatingTasks ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               <span>1-Click Create All Tasks</span>
@@ -203,44 +202,44 @@ Tanvi: Instagram trailer reel went live and hit 12k views.`;
                 key={item.id}
                 className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
                   item.convertedTaskId
-                    ? 'bg-emerald-950/15 border-emerald-500/40'
-                    : 'bg-background-subtle border-border hover:border-border-highlight'
+                    ? 'bg-emerald-50/70 border-emerald-200'
+                    : 'bg-[#F8F9FE] border-[#E9EDF7] hover:bg-white hover:shadow-sm'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono font-semibold text-primary-300">
+                    <span className="text-[10px] font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md border border-primary-100">
                       {item.suggestedTeam || 'Operations'}
                     </span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                      item.suggestedPriority === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300' : 'bg-primary-500/20 text-primary-300'
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                      item.suggestedPriority === 'CRITICAL' ? 'bg-rose-50 text-rose-700' : 'bg-indigo-50 text-indigo-700'
                     }`}>
                       {item.suggestedPriority}
                     </span>
                   </div>
-                  <div className="text-xs font-bold text-white leading-snug">
+                  <div className="text-xs font-bold text-[#191E35] leading-snug">
                     {item.extractedTitle}
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-2 italic line-clamp-2">
+                  <p className="text-[11px] text-[#7A829D] mt-2 italic line-clamp-2">
                     "{item.rawText}"
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400 flex items-center space-x-1">
-                    <User className="w-3 h-3 text-slate-500" />
+                <div className="pt-3 border-t border-[#EAEFF7] flex items-center justify-between text-[11px]">
+                  <span className="text-[#626A87] font-medium flex items-center space-x-1">
+                    <User className="w-3 h-3 text-[#8C93AE]" />
                     <span>{item.suggestedOwner || 'Lead'}</span>
                   </span>
 
                   {item.convertedTaskId ? (
-                    <span className="text-emerald-400 font-bold flex items-center space-x-1 text-[10px]">
+                    <span className="text-emerald-700 font-bold flex items-center space-x-1 text-[10px]">
                       <Check className="w-3 h-3" />
                       <span>Task Created</span>
                     </span>
                   ) : (
                     <button
                       onClick={() => handleConvertSingle(item.id)}
-                      className="px-2.5 py-1 rounded-lg bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 border border-primary-500/30 font-semibold text-[10px] transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 border border-primary-200 font-bold text-[10px] transition-colors"
                     >
                       + Create Task
                     </button>
