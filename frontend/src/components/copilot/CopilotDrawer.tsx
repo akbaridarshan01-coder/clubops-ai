@@ -115,44 +115,44 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({ isOpen, onClose })
 
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-hidden bg-background/60 backdrop-blur-sm animate-fade-in">
+      <div className="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-sm animate-fade-in">
         <div className="absolute inset-0" onClick={onClose} />
-        <div className="absolute inset-y-0 right-0 max-w-lg w-full bg-background-card border-l border-border shadow-2xl flex flex-col z-10 animate-scale-in">
+        <div className="absolute inset-y-0 right-0 max-w-lg w-full bg-white border-l border-[#EAEFF7] shadow-2xl flex flex-col z-10 animate-scale-in">
           {/* Header */}
-          <div className="p-4 border-b border-border flex items-center justify-between bg-background-subtle">
+          <div className="p-4 border-b border-[#EAEFF7] flex items-center justify-between bg-[#F4F5FB]">
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-accent-cyan p-0.5 flex items-center justify-center">
-                <div className="w-full h-full bg-background-card rounded-[10px] flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-accent-cyan animate-pulse" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-0.5 flex items-center justify-center flex-shrink-0">
+                <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-violet-600" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <h2 className="text-sm font-bold text-white">AI Chatbot</h2>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary-500/20 text-primary-300 font-mono">
-                    WEBSITE & OPS
+                  <h2 className="text-sm font-bold text-[#191E35]">AI Chatbot</h2>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-mono font-semibold">
+                    WEBSITE &amp; OPS
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[#7A829D]">
                   {currentEvent?.name ? `Event: ${currentEvent.name}` : 'Website & Operations Assistant'}
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg">
+            <button onClick={onClose} className="p-1.5 text-[#7A829D] hover:text-[#191E35] hover:bg-white rounded-lg transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Toast Notification if action succeeded */}
           {toastMessage && (
-            <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/30 text-xs text-emerald-300 flex items-center space-x-2 animate-fade-in">
-              <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <div className="p-3 bg-emerald-50 border-b border-emerald-200 text-xs text-emerald-700 flex items-center space-x-2 animate-fade-in">
+              <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-500" />
               <span>{toastMessage}</span>
             </div>
           )}
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F4F5FB]">
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -161,16 +161,16 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({ isOpen, onClose })
                 <div
                   className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-primary-600 text-white rounded-br-none shadow-glow'
-                      : 'bg-background-subtle border border-border text-slate-200 rounded-bl-none'
+                      ? 'bg-[#8B5CF6] text-white rounded-br-none shadow-md'
+                      : 'bg-white border border-[#EAEFF7] text-[#191E35] rounded-bl-none shadow-sm'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{m.content}</div>
 
                   {/* Proposed Real Backend Action Buttons */}
                   {m.proposedActions && m.proposedActions.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border/80 space-y-2">
-                      <div className="text-[10px] font-bold text-primary-300 uppercase tracking-wider flex items-center space-x-1">
+                    <div className="mt-3 pt-3 border-t border-[#EAEFF7] space-y-2">
+                      <div className="text-[10px] font-bold text-violet-600 uppercase tracking-wider flex items-center space-x-1">
                         <Sparkles className="w-3 h-3" />
                         <span>Recommended Operational Actions:</span>
                       </div>
@@ -179,35 +179,35 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({ isOpen, onClose })
                           <button
                             key={act.id}
                             onClick={() => handleActionClick(act)}
-                            className="w-full px-3 py-2 rounded-xl bg-primary-500/15 hover:bg-primary-500/25 border border-primary-500/30 text-left text-xs text-primary-200 font-medium transition-colors flex items-center justify-between group"
+                            className="w-full px-3 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200 text-left text-xs text-violet-700 font-medium transition-colors flex items-center justify-between group"
                           >
                             <span className="truncate">{act.buttonLabel}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-primary-400 group-hover:translate-x-0.5 transition-transform" />
+                            <ArrowRight className="w-3.5 h-3.5 text-violet-500 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
                           </button>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500 mt-1 px-1">{m.timestamp}</span>
+                <span className="text-[10px] text-[#7A829D] mt-1 px-1">{m.timestamp}</span>
               </div>
             ))}
 
             {loading && (
-              <div className="flex items-center space-x-2 text-xs text-slate-400 p-2">
-                <Loader2 className="w-4 h-4 animate-spin text-primary-400" />
+              <div className="flex items-center space-x-2 text-xs text-[#7A829D] p-2">
+                <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
                 <span>Chatbot is analyzing and preparing answer...</span>
               </div>
             )}
           </div>
 
           {/* Suggestion Chips */}
-          <div className="px-4 py-2 border-t border-border bg-background-subtle/50 flex items-center space-x-2 overflow-x-auto">
+          <div className="px-4 py-2 border-t border-[#EAEFF7] bg-white flex items-center space-x-2 overflow-x-auto">
             {chips.map((chip) => (
               <button
                 key={chip}
                 onClick={() => handleSend(chip)}
-                className="px-2.5 py-1 rounded-lg bg-background-hover border border-border text-[11px] text-slate-300 hover:text-white hover:border-primary-500/40 whitespace-nowrap transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-[#F4F5FB] border border-[#EAEFF7] text-[11px] text-[#7A829D] hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50 whitespace-nowrap transition-colors"
               >
                 {chip}
               </button>
@@ -215,19 +215,19 @@ export const CopilotDrawer: React.FC<CopilotDrawerProps> = ({ isOpen, onClose })
           </div>
 
           {/* Input Box */}
-          <div className="p-3 border-t border-border bg-background-card flex items-center space-x-2">
+          <div className="p-3 border-t border-[#EAEFF7] bg-white flex items-center space-x-2">
             <input
               type="text"
               placeholder="Ask anything about the website, features, tasks, or event..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="flex-1 bg-background-subtle border border-border focus:border-primary-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+              className="flex-1 bg-[#F4F5FB] border border-[#EAEFF7] focus:border-violet-400 rounded-xl px-3.5 py-2.5 text-xs text-[#191E35] placeholder-[#7A829D] focus:outline-none transition-colors"
             />
             <button
               onClick={() => handleSend()}
               disabled={loading || !query.trim()}
-              className="p-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white disabled:opacity-50 transition-colors shadow-glow"
+              className="p-2.5 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white disabled:opacity-50 transition-colors shadow-md flex-shrink-0"
             >
               <Send className="w-4 h-4" />
             </button>
