@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.npm
+
+# Build outputs
+dist/
+build/
+
+# Environment files (keep .env.example)
+.env
+!.env.example
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dev.db
+
+# WhatsApp session / cache
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite / TypeScript cache
+.vite/
+*.tsbuildinfo
+
+# Uploads
+uploads/
